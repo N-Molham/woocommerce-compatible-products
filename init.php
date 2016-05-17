@@ -73,6 +73,13 @@ class Plugin extends Singular
 	var $ajax;
 
 	/**
+	 * Products
+	 *
+	 * @var Products
+	 */
+	var $products;
+
+	/**
 	 * Initialization
 	 *
 	 * @return void
@@ -88,7 +95,6 @@ class Plugin extends Singular
 		// Plugins dependencies check
 		if (
 			Helpers::is_plugin_inactive( 'woocommerce/woocommerce.php' ) ||
-			Helpers::is_plugin_inactive( 'woocommerce-composite-products/woocommerce-composite-products.php' ) ||
 			Helpers::is_plugin_inactive( 'woocommerce-measurement-price-calculator/woocommerce-measurement-price-calculator.php' )
 		)
 		{
@@ -97,6 +103,7 @@ class Plugin extends Singular
 		}
 
 		// modules
+		$this->products = Products::get_instance();
 		$this->ajax     = Ajax_Handler::get_instance();
 		$this->backend  = Backend::get_instance();
 		$this->frontend = Frontend::get_instance();

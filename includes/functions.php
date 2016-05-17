@@ -8,6 +8,7 @@
  */
 
 use WooCommerce\Compatible_Products\Plugin;
+use WooCommerce\Compatible_Products\Products;
 
 if ( !function_exists( 'wc_compatible_products' ) ):
 	/**
