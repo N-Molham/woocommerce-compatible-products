@@ -1,5 +1,7 @@
 <?php namespace WooCommerce\Compatible_Products;
 
+use WC_AJAX;
+
 /**
  * AJAX handler
  *
@@ -25,6 +27,16 @@ class Ajax_Handler extends Component
 				add_action( 'wp_ajax_' . $action, [ &$this, $action ] );
 			}
 		}
+	}
+
+	/**
+	 * Compatible products search handler
+	 *
+	 * @return void
+	 */
+	public function search_compatible_products()
+	{
+		WC_AJAX::json_search_products_and_variations();
 	}
 
 	/**

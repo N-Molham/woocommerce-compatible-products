@@ -21,7 +21,7 @@ final class Helpers
 	 *
 	 * @var bool
 	 */
-	static $force_debugging = true;
+	static $force_debugging = false;
 
 	/**
 	 * Dump data
@@ -210,6 +210,16 @@ final class Helpers
 	public static function enqueue_suffix()
 	{
 		return self::is_script_debugging() ? '' : '.min';
+	}
+
+	/**
+	 * Determine scripts and styles enqueues base directory
+	 *
+	 * @return string
+	 */
+	public static function enqueue_base_dir()
+	{
+		return self::is_script_debugging() ? 'assets/src/' : 'assets/dist/';
 	}
 
 	/**
