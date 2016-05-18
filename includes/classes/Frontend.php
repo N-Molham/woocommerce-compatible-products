@@ -21,5 +21,24 @@ class Frontend extends Component
 	protected function init()
 	{
 		parent::init();
+
+		add_action( 'wp_enqueue_scripts', [ &$this, 'enqueues' ] );
+	}
+
+	/**
+	 * Enqueue JS & CSS assets
+	 *
+	 * @return void
+	 */
+	public function enqueues()
+	{
+		if ( !is_product() )
+		{
+			// skip for non-product page
+			return;
+		}
+
+		// load main JS file
+		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . Helpers::enqueue_base_dir() . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
 	}
 }

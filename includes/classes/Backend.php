@@ -1,5 +1,7 @@
 <?php namespace WooCommerce\Compatible_Products;
 
+use WC_Product;
+use WC_Product_Variation;
 use WP_Post;
 
 /**
@@ -36,11 +38,34 @@ class Backend extends Component
 		// Save product variation data
 		add_action( 'woocommerce_save_product_variation', [ &$this, 'save_product_variation_compatible_data' ] );
 
-		// TODO move data to main variation list
-		// add_filter( 'woocommerce_available_variation', 'load_variation_settings_fields' );
+		// Product variations data filter
+		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
 
 		// dashboard scripts
 		add_action( 'admin_enqueue_scripts', [ &$this, 'enqueue_scripts' ] );
+	}
+
+	/**
+	 * Add compatible products data to variation data
+	 *
+	 * @param array $variation_data
+	 *
+	 * @return array
+	 */
+	public function append_compatible_products_to_variation_data( $variation_data )
+	{
+		// append list to variation data array
+		$variation_data['_wc_cp_compatible_products'] = wc_compatible_products()->products->get_product_compatible_products_list( $variation_data['variation_id'], true );
+
+		if ( isset( $variation_data['_wc_cp_compatible_products'][0] ) )
+		{
+			// append compatible products panel
+			$variation_data['variation_description'] .= wc_cp_view( 'frontend/compatible_list', [
+				'compatible_products' => $variation_data['_wc_cp_compatible_products'],
+			], true );
+		}
+
+		return $variation_data;
 	}
 
 	/**
@@ -80,22 +105,11 @@ class Backend extends Component
 	 */
 	public function product_variation_compatible_products_field( $variation_index, $variation_data, $variation )
 	{
-		// vars
-		$products_ids  = wc_compatible_products()->products->get_product_compatible_products( $variation->ID );
-		$products_list = [ ];
-		foreach ( $products_ids as $product_id )
-		{
-			$products_list[] = [
-				'id'   => $product_id,
-				'text' => wc_get_product( $product_id )->get_formatted_name(),
-			];
-		}
-
 		wc_cp_view( 'admin/product_data/compatibles_field', [
 			'variation_id'      => $variation->ID,
 			'field_name'        => $this->compatible_meta_key,
-			'field_value'       => $products_ids,
-			'initial_selection' => $products_list,
+			'field_value'       => wc_compatible_products()->products->get_product_compatible_products( $variation->ID ),
+			'initial_selection' => wc_compatible_products()->products->get_product_compatible_products_list( $variation->ID ),
 		] );
 	}
 
