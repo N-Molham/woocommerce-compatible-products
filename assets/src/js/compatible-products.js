@@ -11,7 +11,7 @@
 
 		// when user selects a variation
 		$variations_form.on( 'woocommerce_variation_has_changed', function () {
-			$variations_form.find( '.compatible-product-link' ).popover();
+			
 		} );
 	} );
 })( jQuery, window );
