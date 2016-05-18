@@ -6,6 +6,10 @@
  * Time: 6:18 PM
  */
 ?>
+
+<p class="wc-cp-need-fittings"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></p>
+<p class="wc-cp-need-assembly"><?php _e( 'Do you need assembly?', 'woocommerce' ) ?></p>
+
 <div class="panel panel-primary">
 	<div class="panel-heading"><?php _e( 'Compatible Products', 'woocommerce' ); ?></div>
 	<div class="panel-body">
@@ -14,9 +18,7 @@
 				<li class="list-group-item compatible-product">
 					<div class="row">
 						<div class="col-md-9">
-							<a href="<?php echo esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
-							   data-placement="left" data-trigger="hover" data-html="true"
-							   data-content="<?php echo esc_attr( $product['image'] ); ?>">
+							<a href="javascript:void(0);" class="compatible-product-link quickview" data-id="<?php echo esc_attr( $product['id'] ); ?>">
 								<?php echo $product['text']; ?>
 							</a>
 						</div>

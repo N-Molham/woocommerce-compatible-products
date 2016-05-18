@@ -3,4 +3,4 @@
  */
 !function(a,b,c){a(function(){var b=a(".variations_form");b.length<1||
 // when user selects a variation
-b.on("woocommerce_variation_has_changed",function(){b.find(".compatible-product-link").popover()})})}(jQuery,window);
+b.on("woocommerce_variation_has_changed",function(){})})}(jQuery,window);
