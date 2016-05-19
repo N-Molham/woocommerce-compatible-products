@@ -42,14 +42,18 @@ $popover_content = '';
 				unset( $query_args['add-to-cart'] );
 
 				// popover content
-				$popover_content = $product['image'] . '<div class="wc-cp-product-price align-center">' . $product['price_formatted'] . '</div>'
+				$popover_content = [
+					$product['image'],
+					'<div class="wc-cp-product-price align-center">' . $product['price_formatted'] . '</div>',
+					'<a href="'. esc_url( $product['product_link'] ) .'" target="_blank" class="button btn btn-block wc-cp-product-link">'. __( 'Read More', 'woocommerce' ) .'</a>',
+				];
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
 						<div class="col-md-9">
-							<a href="<?php echo esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
-							   data-toggle="popover" data-html="true" data-placement="left" data-trigger="hover"
-							   data-content="<?php echo esc_attr( $popover_content ); ?>">
+							<a href="javascript:void(0);" target="_blank" class="compatible-product-link"
+							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="focus"
+							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>">
 								<?php echo $product['text']; ?>
 							</a>
 						</div>
