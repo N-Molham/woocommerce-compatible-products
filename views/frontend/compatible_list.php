@@ -9,10 +9,17 @@
 // products query args holder
 $query_args = [ ];
 ?>
-<p class="wc-cp-need-fittings"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></p>
-<p class="wc-cp-need-assembly"><?php _e( 'Do you need assembly?', 'woocommerce' ) ?></p>
+<div class="row">
+	<div class="col-md-4 col-sm-4"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
+	<div class="col-md-4 col-sm-4">
+		<label>
+			<input class="wc-cp-need-compatible" type="checkbox" value="yes" />
+			<?php _e( 'Yes', 'wooocommerce' ); ?>
+		</label>
+	</div>
+</div>
 
-<div class="panel panel-primary">
+<div class="panel panel-primary wc-cp-products-list">
 	<div class="panel-heading"><?php _e( 'Compatible Products', 'woocommerce' ); ?></div>
 	<div class="panel-body">
 		<ul class="list-group">
@@ -20,6 +27,12 @@ $query_args = [ ];
 				<?php
 				// parse product args
 				parse_str( parse_url( $product['add_to_cart_link'], PHP_URL_QUERY ), $query_args );
+
+				if ( !isset( $query_args['add-to-cart'] ) )
+				{
+					// skip products that can't be added to the cart
+					continue;
+				}
 
 				// replace add to cart arg
 				$query_args['action']     = 'add_compatible_product_to_cart';

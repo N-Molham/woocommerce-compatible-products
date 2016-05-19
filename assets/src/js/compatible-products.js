@@ -9,6 +9,17 @@
 			return;
 		}
 
+		// when show compatible products checkbox change
+		$variations_form.on( 'change wc-cp-change', '.wc-cp-need-compatible', function ( e ) {
+			$variations_form.find( '.wc-cp-products-list' ).css( 'display', e.target.checked ? 'block' : 'none' );
+		} ).trigger( 'wc-cp-change' );
+
+		// when variation changes
+		$variations_form.on( 'woocommerce_variation_has_changed', function () {
+			// trigger compatible checkbox checked change
+			$variations_form.find( '.wc-cp-need-compatible' ).trigger( 'wc-cp-change' );
+		} );
+
 		// add product to cart click
 		$variations_form.on( 'click', '.compatible-product-add-to-cart-link', function ( e ) {
 			e.preventDefault();
