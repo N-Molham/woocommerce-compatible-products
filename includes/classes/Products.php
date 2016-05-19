@@ -72,6 +72,8 @@ class Products extends Component
 			{
 				// detailed information
 				$product_info['product_id']       = $product->id;
+				$product_info['price']            = $product->get_price();
+				$product_info['price_formatted']  = $product->get_price_html();
 				$product_info['image']            = $product->get_image();
 				$product_info['image_src']        = get_the_post_thumbnail_url( $product->get_image_id(), 'shop_thumbnail' );
 				$product_info['product_link']     = $product->get_permalink();

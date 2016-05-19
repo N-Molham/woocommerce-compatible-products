@@ -18,6 +18,9 @@
 		$variations_form.on( 'woocommerce_variation_has_changed', function () {
 			// trigger compatible checkbox checked change
 			$variations_form.find( '.wc-cp-need-compatible' ).trigger( 'wc-cp-change' );
+
+			// initialize popovers
+			$variations_form.find( '.compatible-product-link' ).popover();
 		} );
 
 		// add product to cart click

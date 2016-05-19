@@ -7,7 +7,8 @@
  */
 
 // products query args holder
-$query_args = [ ];
+$query_args      = [ ];
+$popover_content = '';
 ?>
 <div class="row">
 	<div class="col-md-4 col-sm-4"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
@@ -39,11 +40,16 @@ $query_args = [ ];
 				$query_args['product_id'] = $query_args['add-to-cart'];
 				$query_args['security']   = wp_create_nonce( 'wc_cp_add_to_cart' );
 				unset( $query_args['add-to-cart'] );
+
+				// popover content
+				$popover_content = $product['image'] . '<div class="wc-cp-product-price align-center">' . $product['price_formatted'] . '</div>'
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
 						<div class="col-md-9">
-							<a href="javascript:void(0);" class="compatible-product-link quickview" data-id="<?php echo esc_attr( $product['id'] ); ?>">
+							<a href="<?php echo esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
+							   data-toggle="popover" data-html="true" data-placement="left" data-trigger="hover"
+							   data-content="<?php echo esc_attr( $popover_content ); ?>">
 								<?php echo $product['text']; ?>
 							</a>
 						</div>

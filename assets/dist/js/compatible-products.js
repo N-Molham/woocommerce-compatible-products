@@ -7,7 +7,9 @@ b.on("change wc-cp-change",".wc-cp-need-compatible",function(a){b.find(".wc-cp-p
 // when variation changes
 b.on("woocommerce_variation_has_changed",function(){
 // trigger compatible checkbox checked change
-b.find(".wc-cp-need-compatible").trigger("wc-cp-change")}),
+b.find(".wc-cp-need-compatible").trigger("wc-cp-change"),
+// initialize popovers
+b.find(".compatible-product-link").popover()}),
 // add product to cart click
 b.on("click",".compatible-product-add-to-cart-link",function(b){b.preventDefault();
 // start loading
