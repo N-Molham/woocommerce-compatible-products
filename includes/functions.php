@@ -22,6 +22,18 @@ if ( !function_exists( 'wc_compatible_products' ) ):
 	}
 endif;
 
+if ( !function_exists( 'wc_cp_products' ) ):
+	/**
+	 * Get Products component instance
+	 *
+	 * @return Products
+	 */
+	function wc_cp_products()
+	{
+		return wc_compatible_products()->products;
+	}
+endif;
+
 if ( !function_exists( 'wc_cp_view' ) ):
 	/**
 	 * Load view
