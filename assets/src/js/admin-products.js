@@ -26,13 +26,16 @@
 					quietMillis: 250,
 					data       : function ( term ) {
 						return {
-							action  : 'search_compatible_products',
-							term    : term,
-							security: wc_cp_compatible_products.search_nonce
+							action       : 'search_compatible_products',
+							term         : term,
+							security     : wc_cp_compatible_products.search_nonce,
+							wc_cp_request: true
 						};
 					},
 					results    : function ( data ) {
 						var parsed_results = [];
+
+						console.log( data );
 
 						// build the result set
 						for ( var pid in data ) {
