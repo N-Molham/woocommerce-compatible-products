@@ -1,11 +1,6 @@
 <?php namespace WooCommerce\Compatible_Products;
 
 use WC_Cart;
-use WC_Price_Calculator_Measurement;
-use WC_Price_Calculator_Product;
-use WC_Price_Calculator_Settings;
-use WC_Product;
-use WC_Product_Composite;
 use WC_Session;
 
 /**
@@ -47,6 +42,31 @@ class Products extends Component
 		// WooCommerce initialized
 		add_action( 'woocommerce_init', [ &$this, 'mark_cart_to_have_assembly_fees' ] );
 		add_action( 'woocommerce_init', [ &$this, 'remove_assembly_fees_from_cart' ] );
+
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && isset( $_GET['wc_cp_request'] ) )
+		{
+			// filter searched products result
+			add_filter( 'woocommerce_json_search_found_products', [ &$this, 'json_replace_ids_with_skus' ] );
+		}
+	}
+
+	/**
+	 * Replace IDs with SKUs in searched products result
+	 *
+	 * @param array $products
+	 *
+	 * @return array
+	 */
+	public function json_replace_ids_with_skus( $products )
+	{
+		foreach ( $products as $product_id => $product_name )
+		{
+			// replace product ID with SKU
+			$products[ $this->get_product_sku_by_id( $product_id ) ] = $product_name;
+			unset( $products[ $product_id ] );
+		}
+
+		return $products;
 	}
 
 	/**
@@ -205,7 +225,7 @@ class Products extends Component
 	}
 
 	/**
-	 * Get product compatible products IDs
+	 * Get product compatible products SKUs
 	 *
 	 * @param int $variation_id
 	 *
@@ -214,6 +234,18 @@ class Products extends Component
 	public function get_product_compatible_products( $variation_id )
 	{
 		return array_filter( get_post_meta( $variation_id, $this->compatible_products_key ) );
+	}
+
+	/**
+	 * Get product SKU by ID.
+	 *
+	 * @param int $product_id
+	 *
+	 * @return string
+	 */
+	function get_product_sku_by_id( $product_id )
+	{
+		return get_post_meta( $product_id, '_sku', true );
 	}
 
 	/**
@@ -227,18 +259,37 @@ class Products extends Component
 	public function get_product_compatible_products_list( $variation_id, $full_info = false )
 	{
 		// vars
-		$products_ids  = $this->get_product_compatible_products( $variation_id );
+		$products_skus = $this->get_product_compatible_products( $variation_id );
 		$products_list = [ ];
 		$product_info  = [ ];
 		$product       = null;
 
-		foreach ( $products_ids as $compatible_pid )
+		foreach ( $products_skus as $compatible_sku )
 		{
-			$product = wc_get_product( $compatible_pid );
+			if ( is_numeric( $compatible_sku ) )
+			{
+				// get product SKU from ID
+				$compatible_id  = absint( $compatible_sku );
+				$compatible_sku = $this->get_product_sku_by_id( $compatible_sku );
+			}
+			else
+			{
+				// get product ID from SKU
+				$compatible_id = wc_get_product_id_by_sku( $compatible_sku );
+			}
+
+			// query product info
+			$product = wc_get_product( $compatible_id );
+
+			if ( false === $product )
+			{
+				// skip as product not found
+				continue;
+			}
 
 			// basic info
 			$product_info = [
-				'id'   => $compatible_pid,
+				'id'   => $compatible_id,
 				'text' => $product->get_formatted_name(),
 			];
 
@@ -246,6 +297,7 @@ class Products extends Component
 			{
 				// detailed information
 				$product_info['product_id']       = $product->id;
+				$product_info['sku']              = $product->get_sku();
 				$product_info['price']            = $product->get_price();
 				$product_info['price_formatted']  = $product->get_price_html();
 				$product_info['image']            = $product->get_image();
@@ -256,7 +308,7 @@ class Products extends Component
 
 			$products_list[] = $product_info;
 		}
-		unset( $product_info, $compatible_pid, $product );
+		unset( $product_info, $compatible_id, $compatible_sku, $product );
 
 		return $products_list;
 	}
