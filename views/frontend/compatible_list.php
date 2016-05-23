@@ -52,7 +52,7 @@ $popover_content = '';
 					<div class="row">
 						<div class="col-md-9">
 							<a href="javascript:void(0);" target="_blank" class="compatible-product-link"
-							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="focus"
+							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="<?php echo wp_is_mobile() ? 'focus' : 'hover' ?>"
 							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>">
 								<?php echo $product['text']; ?>
 							</a>
