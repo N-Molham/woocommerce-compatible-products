@@ -43,6 +43,45 @@ class Backend extends Component
 
 		// dashboard scripts
 		add_action( 'admin_enqueue_scripts', [ &$this, 'enqueue_scripts' ] );
+
+		// WooCommerce general settings filter
+		add_filter( 'woocommerce_products_general_settings', [ &$this, 'add_search_categories_filter' ] );
+	}
+
+	/**
+	 * Add categories filter for JSON products search
+	 *
+	 * @param array $settings
+	 *
+	 * @return array
+	 */
+	public function add_search_categories_filter( $settings )
+	{
+		$settings[] = [
+			'title' => __( 'Compatible Products Options', 'woocommerce' ),
+			'type'  => 'title',
+			'desc'  => '',
+			'id'    => 'wc_cp_options',
+		];
+
+		$settings[] = [
+			'title'    => __( 'Categories Filter', 'woocommerce' ),
+			'desc'     => __( 'This controls which category(ies) the compatible products search in.', 'woocommerce' ),
+			'id'       => 'wc_cp_category_filter',
+			'css'      => 'min-width:350px;',
+			'default'  => '',
+			'type'     => 'multiselect',
+			'class'    => 'wc-enhanced-select',
+			'desc_tip' => true,
+			'options'  => get_terms( 'product_cat', [ 'fields' => 'id=>name' ] ),
+		];
+
+		$settings[] = [
+			'type' => 'sectionend',
+			'id'   => 'wc_cp_options',
+		];
+
+		return $settings;
 	}
 
 	/**

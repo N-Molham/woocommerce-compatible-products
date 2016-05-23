@@ -59,8 +59,24 @@ class Products extends Component
 	 */
 	public function json_replace_ids_with_skus( $products )
 	{
+		$allowed_categories = array_map( 'intval', get_option( 'wc_cp_category_filter', [ ] ) );
+
 		foreach ( $products as $product_id => $product_name )
 		{
+			if ( null !== $allowed_categories )
+			{
+				$parent_product_id = wp_get_post_parent_id( $product_id );
+
+				// get product categories
+				$product_cats = wp_get_post_terms( $parent_product_id ? $parent_product_id : $product_id, 'product_cat', [ 'fields' => 'ids' ] );
+				if ( 0 === count( $product_cats ) || 0 === count( array_intersect( $product_cats, $allowed_categories ) ) )
+				{
+					// product not allowed, remove from list
+					unset( $products[ $product_id ] );
+					continue;
+				}
+			}
+
 			// replace product ID with SKU
 			$products[ $this->get_product_sku_by_id( $product_id ) ] = $product_name;
 			unset( $products[ $product_id ] );
