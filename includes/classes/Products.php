@@ -178,7 +178,7 @@ class Products extends Component
 		// look into the cart for product variation with compatible products
 		foreach ( $cart->get_cart() as $cart_item_key => $cart_item )
 		{
-			if ( !isset( $cart_item['variation_id'] ) )
+			if ( !isset( $cart_item['variation_id'] ) || $cart_item['variation_id'] < 1 )
 			{
 				// skip as the item is not a product variation
 				continue;
