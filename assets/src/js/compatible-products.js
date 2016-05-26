@@ -9,6 +9,12 @@
 			return;
 		}
 
+		var $instructions_btn = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
+		    $needed_length    = $( '#length_needed' );
+
+		// move button to new location
+		$( '<tr><td colspan="2"></td></tr>' ).insertAfter( $needed_length.closest( 'tr' ) ).find( 'td' ).append( $instructions_btn );
+
 		// when show compatible products checkbox change
 		$variations_form.on( 'change wc-cp-change', '.wc-cp-need-compatible', function ( e ) {
 			$variations_form.find( '.wc-cp-products-list' ).css( 'display', e.target.checked ? 'block' : 'none' );
