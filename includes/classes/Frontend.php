@@ -34,6 +34,62 @@ class Frontend extends Component
 
 		// WooCommerce notices types
 		add_filter( 'woocommerce_notice_types', [ &$this, 'add_assembly_notice_type' ] );
+
+		// WooCommerce before order submit button
+		add_action( 'woocommerce_review_order_before_submit', [ &$this, 'order_assembly_fees_confirm_checkbox' ] );
+
+		// WooCommerce before checkout process
+		add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
+	}
+
+	/**
+	 * Check if assembly specifications is checked
+	 *
+	 * @return void
+	 */
+	public function checkout_is_assembly_term_checked()
+	{
+		if ( false === wc_cp_products()->cart_has_assembly_fee( WC()->cart ) )
+		{
+			// skip as the cart doesn't have assembly fees applied
+			return;
+		}
+
+		if ( 'on' !== filter_input( INPUT_POST, 'assembly' ) )
+		{
+			// add error message
+			wc_add_notice( __( 'You must accept our assembly specifications.', 'woocommerce' ), 'error' );
+
+			ob_start();
+			wc_print_notices();
+
+			wp_send_json( [
+				'result'   => 'failure',
+				'messages' => ob_get_clean(),
+				'refresh'  => isset( WC()->session->refresh_totals ) ? 'true' : 'false',
+				'reload'   => isset( WC()->session->reload_checkout ) ? 'true' : 'false',
+			] );
+		}
+	}
+
+	/**
+	 * Add order assembly fees confirmation checkbox
+	 *
+	 * @return void
+	 */
+	public function order_assembly_fees_confirm_checkbox()
+	{
+		if ( false === wc_cp_products()->cart_has_assembly_fee( WC()->cart ) )
+		{
+			// skip as the cart doesn't have assembly fees applied
+			return;
+		}
+
+		echo $this->get_measuring_instructions();
+
+		wc_cp_view( 'frontend/checkout/assembly_checkbox', [
+			'assembly_is_checked' => 'on' === filter_input( INPUT_POST, 'assembly' ),
+		] );
 	}
 
 	/**
@@ -89,10 +145,21 @@ class Frontend extends Component
 			return;
 		}
 
-		// add the offer notice
-		wc_add_notice( sprintf( __( 'Do you need assembly? Fees: <b>%s</b> <a href="%s" class="button"><i class="fa fa-plus-circle"></i> Yes</a> ', 'woocommerce' ),
+		$notice_content = get_option( 'wc_cp_assembly_notice', false );
+		if ( false === $notice_content )
+		{
+			// skip as the content is not set
+			return;
+		}
+
+		// append final cost and confirm button
+		$notice_content .= sprintf( __( '<b>%s</b> <a href="%s" class="button"><i class="fa fa-plus-circle"></i> Yes</a> ', 'woocommerce' ),
 			wc_price( $assembly_fees ),
-			add_query_arg( 'wc_cp_add_assembly', 'yes' ) ), $this->assembly_notice_type );
+			add_query_arg( 'wc_cp_add_assembly', 'yes' )
+		);
+
+		// add the offer notice
+		wc_add_notice( $notice_content, $this->assembly_notice_type );
 	}
 
 	/**
@@ -110,5 +177,21 @@ class Frontend extends Component
 
 		// load main JS file
 		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . Helpers::enqueue_base_dir() . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
+	}
+
+	/**
+	 * Get measuring instructions modal box
+	 *
+	 * @return string
+	 */
+	public function get_measuring_instructions()
+	{
+		ob_start();
+
+		wc_cp_view( 'frontend/instructions_modal', [
+			'instructions' => wc_cp_products()->get_measuring_instructions(),
+		] );
+
+		return ob_get_clean();
 	}
 }

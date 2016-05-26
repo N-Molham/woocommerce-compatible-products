@@ -216,6 +216,41 @@ class Products extends Component
 	}
 
 	/**
+	 * Check if cart has assembly fees or not
+	 *
+	 * @param WC_Cart $cart
+	 *
+	 * @return bool
+	 */
+	public function cart_has_assembly_fee( &$cart )
+	{
+		$fees = $cart->get_fees();
+		if ( empty( $fees ) )
+		{
+			// cart has no fees at all
+			return false;
+		}
+
+		$assembly_fees = $this->calculate_assembly_fee( $cart );
+		if ( false === $assembly_fees )
+		{
+			// skip as forced to ignore the assembly fees
+			return false;
+		}
+
+		foreach ( $fees as $fee )
+		{
+			if ( 'assembly-fees' === $fee->id && $assembly_fees === $fee->amount )
+			{
+				// found it
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Calculate compatible products assembly fees
 	 *
 	 * @param WC_Cart $cart
@@ -238,6 +273,16 @@ class Products extends Component
 			&$cart,
 			$this->assembly_fees_percentage,
 		] );
+	}
+
+	/**
+	 * Get measuring instructions set by admin
+	 *
+	 * @return string|boolean
+	 */
+	public function get_measuring_instructions()
+	{
+		return get_option( 'wc_cp_measure_instructions', false );
 	}
 
 	/**
