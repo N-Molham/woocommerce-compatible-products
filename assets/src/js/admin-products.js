@@ -35,8 +35,6 @@
 					results    : function ( data ) {
 						var parsed_results = [];
 
-						console.log( data );
-
 						// build the result set
 						for ( var pid in data ) {
 							if ( data.hasOwnProperty( pid ) ) {
