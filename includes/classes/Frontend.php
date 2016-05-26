@@ -40,6 +40,27 @@ class Frontend extends Component
 
 		// WooCommerce before checkout process
 		add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
+
+		// WooCommerce before product's add to cart button
+		add_action( 'woocommerce_before_add_to_cart_button', [
+			&$this,
+			'product_fittings_measuring_instructions_modal',
+		] );
+
+		add_action( 'wp_footer', [ &$this, 'product_fittings_measuring_instructions_modal' ], PHP_INT_MAX );
+	}
+
+	/**
+	 * Add measuring instructions modal to product page
+	 *
+	 * @return void
+	 */
+	public function product_fittings_measuring_instructions_modal()
+	{
+		if ( is_product() || is_checkout() )
+		{
+			echo $this->get_measuring_instructions();
+		}
 	}
 
 	/**
@@ -85,7 +106,7 @@ class Frontend extends Component
 			return;
 		}
 
-		echo $this->get_measuring_instructions();
+		// echo $this->get_measuring_instructions();
 
 		wc_cp_view( 'frontend/checkout/assembly_checkbox', [
 			'assembly_is_checked' => 'on' === filter_input( INPUT_POST, 'assembly' ),

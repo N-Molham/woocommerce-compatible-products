@@ -1,7 +1,9 @@
 /**
  * Created by nabeel on 5/18/16.
  */
-!function(a,b,c){a(function(){var b=a(".variations_form");b.length<1||(
+!function(a,b,c){a(function(){var b=a(".variations_form");if(!(b.length<1)){var c=a("#measuring-instructions-button").removeClass("hidden"),d=a("#length_needed");
+// move button to new location
+a('<tr><td colspan="2"></td></tr>').insertAfter(d.closest("tr")).find("td").append(c),
 // when show compatible products checkbox change
 b.on("change wc-cp-change",".wc-cp-need-compatible",function(a){b.find(".wc-cp-products-list").css("display",a.target.checked?"block":"none")}).trigger("wc-cp-change"),
 // when variation changes
@@ -29,4 +31,4 @@ e.replaceWith(b.fragments[d])}}else
 // error
 c.button("reset"),alert(b.data);else
 // unknown response format
-c.button("reset"),console.log(b)},"json")}))})}(jQuery,window);
+c.button("reset"),console.log(b)},"json")})}})}(jQuery,window);

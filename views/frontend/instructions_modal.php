@@ -6,6 +6,9 @@
  * Time: 9:15 PM
  */
 ?>
+
+<a href="javascript:void(0)" id="measuring-instructions-button" class="hidden" data-toggle="modal" data-target="#measuring-instructions-modal"><?php _e( 'Measuring instructions', 'woocommerce' ); ?></a>
+
 <div class="modal fade" id="measuring-instructions-modal" tabindex="-1" role="dialog" aria-labelledby="measuring-instructions-label">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
