@@ -1,7 +1,5 @@
 <?php namespace WooCommerce\Compatible_Products;
 
-use WC_Cart;
-
 /**
  * Frontend logic
  *
@@ -9,6 +7,13 @@ use WC_Cart;
  */
 class Frontend extends Component
 {
+	/**
+	 * Assembly fees WC notice type
+	 *
+	 * @var string
+	 */
+	protected $assembly_notice_type = 'assembly';
+
 	/**
 	 * Constructor
 	 *
@@ -26,6 +31,26 @@ class Frontend extends Component
 
 		// load JS asset(s)
 		add_action( 'wp_enqueue_scripts', [ &$this, 'enqueues' ] );
+
+		// WooCommerce notices types
+		add_filter( 'woocommerce_notice_types', [ &$this, 'add_assembly_notice_type' ] );
+	}
+
+	/**
+	 * Add new notice type in WooCommerce
+	 *
+	 * @param array $notice_types
+	 *
+	 * @return array
+	 */
+	public function add_assembly_notice_type( $notice_types )
+	{
+		if ( !in_array( $this->assembly_notice_type, $notice_types ) )
+		{
+			$notice_types[] = $this->assembly_notice_type;
+		}
+
+		return $notice_types;
 	}
 
 	/**
@@ -67,7 +92,7 @@ class Frontend extends Component
 		// add the offer notice
 		wc_add_notice( sprintf( __( 'Do you need assembly? Fees: <b>%s</b> <a href="%s" class="button"><i class="fa fa-plus-circle"></i> Yes</a> ', 'woocommerce' ),
 			wc_price( $assembly_fees ),
-			add_query_arg( 'wc_cp_add_assembly', 'yes' ) ), 'notice' );
+			add_query_arg( 'wc_cp_add_assembly', 'yes' ) ), $this->assembly_notice_type );
 	}
 
 	/**
