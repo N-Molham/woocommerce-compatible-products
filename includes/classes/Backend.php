@@ -77,6 +77,25 @@ class Backend extends Component
 		];
 
 		$settings[] = [
+			'title' => __( 'Measuring Instructions', 'woocommerce' ),
+			'desc'  => '',
+			'id'    => 'wc_cp_measure_instructions',
+			'css'   => 'min-width:350px; min-height: 220px;',
+			'class' => 'code',
+			'type'  => 'textarea',
+		];
+
+		$settings[] = [
+			'title'   => __( 'Assembly Fees Notice', 'woocommerce' ),
+			'desc'    => '',
+			'id'      => 'wc_cp_assembly_notice',
+			'css'     => 'min-width:350px; min-height: 220px;',
+			'class'   => 'code',
+			'type'    => 'textarea',
+			'default' => __( 'Do you need assembly? Fees: ', 'woocommerce' ) . PHP_EOL,
+		];
+
+		$settings[] = [
 			'type' => 'sectionend',
 			'id'   => 'wc_cp_options',
 		];
