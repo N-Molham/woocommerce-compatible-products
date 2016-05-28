@@ -48,6 +48,9 @@ class Frontend extends Component
 		] );
 
 		add_action( 'wp_footer', [ &$this, 'product_fittings_measuring_instructions_modal' ], PHP_INT_MAX );
+
+		// Product variations data filter
+		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
 	}
 
 	/**
@@ -91,6 +94,29 @@ class Frontend extends Component
 				'reload'   => isset( WC()->session->reload_checkout ) ? 'true' : 'false',
 			] );
 		}
+	}
+
+	/**
+	 * Add compatible products data to variation data
+	 *
+	 * @param array $variation_data
+	 *
+	 * @return array
+	 */
+	public function append_compatible_products_to_variation_data( $variation_data )
+	{
+		// append list to variation data array
+		$variation_data['_wc_cp_compatible_products'] = wc_cp_products()->get_product_compatible_products_list( $variation_data['variation_id'], true );
+
+		if ( isset( $variation_data['_wc_cp_compatible_products'][0] ) )
+		{
+			// append compatible products panel
+			$variation_data['variation_description'] .= wc_cp_view( 'frontend/compatible_list', [
+				'compatible_products' => $variation_data['_wc_cp_compatible_products'],
+			], true );
+		}
+
+		return $variation_data;
 	}
 
 	/**

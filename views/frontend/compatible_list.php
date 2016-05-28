@@ -11,8 +11,8 @@ $query_args      = [ ];
 $popover_content = '';
 ?>
 <div class="row">
-	<div class="col-md-4 col-sm-4"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
-	<div class="col-md-4 col-sm-4">
+	<div class="col-md-6 col-sm-6 col-xs-6"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
+	<div class="col-md-6 col-sm-4 col-xs-4">
 		<label>
 			<input class="wc-cp-need-compatible" type="checkbox" value="yes" />
 			<?php _e( 'Yes', 'wooocommerce' ); ?>
@@ -42,22 +42,26 @@ $popover_content = '';
 				unset( $query_args['add-to-cart'] );
 
 				// popover content
-				$popover_content = [
-					$product['image'],
-					'<div class="wc-cp-product-price align-center">' . $product['price_formatted'] . '</div>',
-					'<a href="'. esc_url( $product['product_link'] ) .'" target="_blank" class="button btn btn-block wc-cp-product-link">'. __( 'Read More', 'woocommerce' ) .'</a>',
-				];
+				$popover_content = [ $product['image'] ];
+
+				if ( wp_is_mobile() )
+				{
+					// add product link to popover is mobile view
+					$popover_content[] = '<a href="' . esc_url( $product['product_link'] ) . '" target="_blank" class="button btn btn-block wc-cp-product-link">' . __( 'Read More', 'woocommerce' ) . '</a>';
+				}
+
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
-						<div class="col-md-9">
-							<a href="javascript:void(0);" target="_blank" class="compatible-product-link"
+						<div class="col-md-6 col-sm-12">
+							<a href="<?php echo wp_is_mobile() ? 'javascript:void(0);' : esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
 							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="<?php echo wp_is_mobile() ? 'focus' : 'hover' ?>"
 							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>">
 								<?php echo $product['text']; ?>
 							</a>
 						</div>
-						<div class="col-md-3 align-right">
+						<div class="col-md-2 col-sm-6 col-xs-6 align-center"><?php echo $product['price_formatted']; ?></div>
+						<div class="col-md-4 col-sm-6 col-xs-6 align-right">
 							<a href="<?php echo esc_url( $product['add_to_cart_link'] ) ?>" class="button compatible-product-add-to-cart-link"
 							   data-args="<?php echo esc_attr( json_encode( $query_args ) ); ?>"
 							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Added', 'woocommerce' ); ?>">
