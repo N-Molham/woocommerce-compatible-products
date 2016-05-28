@@ -351,7 +351,7 @@ class Products extends Component
 			// basic info
 			$product_info = [
 				'id'   => $compatible_id,
-				'text' => $product->get_formatted_name(),
+				'text' => $full_info ? $product->get_title() : $product->get_formatted_name(),
 			];
 
 			if ( $full_info )

@@ -38,9 +38,6 @@ class Backend extends Component
 		// Save product variation data
 		add_action( 'woocommerce_save_product_variation', [ &$this, 'save_product_variation_compatible_data' ] );
 
-		// Product variations data filter
-		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
-
 		// dashboard scripts
 		add_action( 'admin_enqueue_scripts', [ &$this, 'enqueue_scripts' ] );
 
@@ -101,29 +98,6 @@ class Backend extends Component
 		];
 
 		return $settings;
-	}
-
-	/**
-	 * Add compatible products data to variation data
-	 *
-	 * @param array $variation_data
-	 *
-	 * @return array
-	 */
-	public function append_compatible_products_to_variation_data( $variation_data )
-	{
-		// append list to variation data array
-		$variation_data['_wc_cp_compatible_products'] = wc_compatible_products()->products->get_product_compatible_products_list( $variation_data['variation_id'], true );
-
-		if ( isset( $variation_data['_wc_cp_compatible_products'][0] ) )
-		{
-			// append compatible products panel
-			$variation_data['variation_description'] .= wc_cp_view( 'frontend/compatible_list', [
-				'compatible_products' => $variation_data['_wc_cp_compatible_products'],
-			], true );
-		}
-
-		return $variation_data;
 	}
 
 	/**
