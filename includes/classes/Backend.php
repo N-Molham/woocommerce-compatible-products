@@ -110,7 +110,7 @@ class Backend extends Component
 	public function save_product_variation_compatible_data( $variation_id )
 	{
 		$selected_products = filter_input( INPUT_POST, $this->compatible_meta_key, FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY );
-		if ( !is_array( $selected_products ) || !isset( $selected_products[ $variation_id ] ) )
+		if ( !is_array( $selected_products ) || !array_key_exists( $variation_id, $selected_products ) )
 		{
 			// skip invalid data
 			return;
@@ -119,10 +119,10 @@ class Backend extends Component
 		// clear old values
 		delete_post_meta( $variation_id, $this->compatible_meta_key );
 
-		foreach ( explode( ',', $selected_products[ $variation_id ] ) as $product_id )
+		foreach ( explode( ',', $selected_products[ $variation_id ] ) as $product_sku )
 		{
 			// save meta value(s)
-			add_post_meta( $variation_id, $this->compatible_meta_key, $product_id );
+			add_post_meta( $variation_id, $this->compatible_meta_key, $product_sku );
 		}
 	}
 
