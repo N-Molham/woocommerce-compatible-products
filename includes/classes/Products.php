@@ -350,7 +350,7 @@ class Products extends Component
 
 			// basic info
 			$product_info = [
-				'id'   => $compatible_id,
+				'id'   => $product->get_sku(),
 				'text' => $full_info ? $product->get_title() : $product->get_formatted_name(),
 			];
 
