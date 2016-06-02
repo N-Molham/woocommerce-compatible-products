@@ -116,14 +116,7 @@ class Backend extends Component
 			return;
 		}
 
-		// clear old values
-		delete_post_meta( $variation_id, $this->compatible_meta_key );
-
-		foreach ( explode( ',', $selected_products[ $variation_id ] ) as $product_sku )
-		{
-			// save meta value(s)
-			add_post_meta( $variation_id, $this->compatible_meta_key, $product_sku );
-		}
+		wc_cp_products()->set_product_compatible_products( $variation_id, $selected_products[ $variation_id ] );
 	}
 
 	/**

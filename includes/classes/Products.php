@@ -286,6 +286,22 @@ class Products extends Component
 	}
 
 	/**
+	 * Set product compatible products SKUs
+	 *
+	 * @param int          $variation_id
+	 * @param array|string $compatible_products
+	 *
+	 * @return void
+	 */
+	public function set_product_compatible_products( $variation_id, $compatible_products )
+	{
+		// array or string
+		$compatible_products = is_array( $compatible_products ) ? implode( '|', $compatible_products ) : str_replace( ',', '|', $compatible_products );
+
+		update_post_meta( $variation_id, $this->compatible_products_key, $compatible_products );
+	}
+
+	/**
 	 * Get product compatible products SKUs
 	 *
 	 * @param int $variation_id
@@ -294,7 +310,7 @@ class Products extends Component
 	 */
 	public function get_product_compatible_products( $variation_id )
 	{
-		return array_filter( get_post_meta( $variation_id, $this->compatible_products_key ) );
+		return array_filter( explode( '|', get_post_meta( $variation_id, $this->compatible_products_key, true ) ) );
 	}
 
 	/**
