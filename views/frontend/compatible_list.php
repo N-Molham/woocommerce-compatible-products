@@ -20,14 +20,15 @@ $popover_content = '';
 	</div>
 </div>
 
-<div class="panel panel-primary wc-cp-products-list">
+<div class="panel panel-primary wc-cp-products-list hidden">
 	<div class="panel-heading"><?php _e( 'Compatible Products', 'woocommerce' ); ?></div>
 	<div class="panel-body">
 		<ul class="list-group">
 			<?php foreach ( $compatible_products as $product ) : ?>
 				<?php
 				// parse product args
-				parse_str( parse_url( $product['add_to_cart_link'], PHP_URL_QUERY ), $query_args );
+				list( $base, $query ) = explode( '?', $product['add_to_cart_link'], 2 );
+				wp_parse_str( urldecode( $query ), $query_args );
 
 				if ( !isset( $query_args['add-to-cart'] ) )
 				{
@@ -36,9 +37,9 @@ $popover_content = '';
 				}
 
 				// replace add to cart arg
-				$query_args['action']     = 'add_compatible_product_to_cart';
+				$query_args['action']     = 'add_compatible_product_to_assembly';
 				$query_args['product_id'] = $query_args['add-to-cart'];
-				$query_args['security']   = wp_create_nonce( 'wc_cp_add_to_cart' );
+				$query_args['security']   = wp_create_nonce( 'wc_cp_add_to_assembly' );
 				unset( $query_args['add-to-cart'] );
 
 				// popover content
@@ -53,24 +54,48 @@ $popover_content = '';
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
-						<div class="col-md-6 col-sm-12">
+						<div class="col-md-5 col-sm-6">
 							<a href="<?php echo wp_is_mobile() ? 'javascript:void(0);' : esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
 							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="<?php echo wp_is_mobile() ? 'focus' : 'hover' ?>"
-							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>">
-								<?php echo $product['text']; ?>
-							</a>
+							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>"><?php echo $product['text']; ?></a>
 						</div>
-						<div class="col-md-2 col-sm-6 col-xs-6 align-center"><?php echo $product['price_formatted']; ?></div>
-						<div class="col-md-4 col-sm-6 col-xs-6 align-right">
-							<a href="<?php echo esc_url( $product['add_to_cart_link'] ) ?>" class="button compatible-product-add-to-cart-link"
+						<div class="col-md-2 col-sm-6 col-xs-4 align-center"><?php echo $product['price_formatted']; ?></div>
+						<div class="col-md-2 col-sm-6 col-xs-4 align-center"><?php woocommerce_quantity_input( [
+								'input_name'  => 'wc_cp_quantity[' . ( $product['is_variation'] ? $product['variation_id'] : $product['product_id'] ) . ']',
+								'input_value' => 1,
+								'min_value'   => 1,
+								'max_value'   => $product['stock_quantity'],
+							], $product['wc_object'] ); ?></div>
+						<div class="col-md-3 col-sm-6 col-xs-4 align-right">
+							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link"
 							   data-args="<?php echo esc_attr( json_encode( $query_args ) ); ?>"
-							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Added', 'woocommerce' ); ?>">
-								<?php _e( 'Add to cart', 'woocommerce' ); ?>
-							</a>
+							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Added', 'woocommerce' ); ?>"><?php
+								_e( 'Add', 'woocommerce' ); ?></a>
 						</div>
 					</div>
 				</li>
+				<?php $query_args = [ ]; ?>
 			<?php endforeach; ?>
 		</ul>
+	</div>
+</div>
+
+<div class="panel panel-primary wc-cp-assembly-config hidden">
+	<div class="panel-heading"><?php _e( 'Review your assembly configuration', 'woocommerce' ); ?></div>
+	<div class="panel-body">
+		<table class="table">
+			<thead>
+			<tr>
+				<th><?php _e( 'Qty', WC_CP_DOMAIN ); ?></th>
+				<th><?php _e( 'Product', WC_CP_DOMAIN ); ?></th>
+				<th><?php _e( 'Price', WC_CP_DOMAIN ); ?></th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr class="empty">
+				<td colspan="3"><?php _e( 'Nothing added yet.', WC_CP_DOMAIN ); ?></td>
+			</tr>
+			</tbody>
+		</table>
 	</div>
 </div>

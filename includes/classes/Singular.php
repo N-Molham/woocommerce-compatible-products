@@ -21,6 +21,7 @@ class Singular
 	 */
 	protected function __construct()
 	{
+		$this->assembly_configs_session_key = 'wc_cp_assembly_configs';
 		// do nothing
 	}
 

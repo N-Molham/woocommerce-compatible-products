@@ -108,11 +108,19 @@ class Frontend extends Component
 		// append list to variation data array
 		$variation_data['_wc_cp_compatible_products'] = wc_cp_products()->get_product_compatible_products_list( $variation_data['variation_id'], true );
 
+		// current assembly configration
+		$assembly_config = wc_cp_products()->get_assembly_configuration();
+		if ( false === $assembly_config )
+		{
+			$assembly_config = wc_cp_products()->create_new_assembly_configuration();
+		}
+
 		if ( isset( $variation_data['_wc_cp_compatible_products'][0] ) )
 		{
 			// append compatible products panel
 			$variation_data['variation_description'] .= wc_cp_view( 'frontend/compatible_list', [
 				'compatible_products' => $variation_data['_wc_cp_compatible_products'],
+				'assembly_config'     => $assembly_config,
 			], true );
 		}
 
