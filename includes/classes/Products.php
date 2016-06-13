@@ -1,6 +1,7 @@
 <?php namespace WooCommerce\Compatible_Products;
 
 use WC_Cart;
+use WC_Product;
 use WC_Session;
 
 /**
@@ -10,6 +11,13 @@ use WC_Session;
  */
 class Products extends Component
 {
+	/**
+	 * Assembly configurations session store key name
+	 *
+	 * @var string
+	 */
+	protected $assembly_configs_session_key = 'wc_cp_assembly_configs';
+
 	/**
 	 * Compatible products assembly fees percentage
 	 *
@@ -23,6 +31,13 @@ class Products extends Component
 	 * @var string
 	 */
 	protected $compatible_products_key = '_wc_cp_products';
+
+	/**
+	 * List of registered assembly configurations
+	 *
+	 * @var array
+	 */
+	protected $assembly_configurations;
 
 	/**
 	 * Constructor
@@ -42,12 +57,23 @@ class Products extends Component
 		// WooCommerce initialized
 		add_action( 'woocommerce_init', [ &$this, 'mark_cart_to_have_assembly_fees' ] );
 		add_action( 'woocommerce_init', [ &$this, 'remove_assembly_fees_from_cart' ] );
+		add_action( 'woocommerce_init', [ &$this, 'setup_assembly_configurations' ] );
 
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && isset( $_GET['wc_cp_request'] ) )
 		{
 			// filter searched products result
 			add_filter( 'woocommerce_json_search_found_products', [ &$this, 'json_replace_ids_with_skus' ] );
 		}
+	}
+
+	/**
+	 * Setup registered assembly configurations information
+	 *
+	 * @return void
+	 */
+	public function setup_assembly_configurations()
+	{
+		$this->assembly_configurations = WC()->session->get( $this->assembly_configs_session_key, [ ] );
 	}
 
 	/**
@@ -343,16 +369,13 @@ class Products extends Component
 
 		foreach ( $products_skus as $compatible_sku )
 		{
-			if ( is_numeric( $compatible_sku ) )
+			// get product ID from SKU
+			$compatible_id = wc_get_product_id_by_sku( $compatible_sku );
+
+			if ( 0 === $compatible_id )
 			{
-				// get product SKU from ID
-				$compatible_id  = absint( $compatible_sku );
-				$compatible_sku = $this->get_product_sku_by_id( $compatible_sku );
-			}
-			else
-			{
-				// get product ID from SKU
-				$compatible_id = wc_get_product_id_by_sku( $compatible_sku );
+				// skip as sku not related to any product
+				continue;
 			}
 
 			// query product info
@@ -381,11 +404,20 @@ class Products extends Component
 				$product_info['image_src']        = get_the_post_thumbnail_url( $product->get_image_id(), 'shop_thumbnail' );
 				$product_info['product_link']     = $product->get_permalink();
 				$product_info['add_to_cart_link'] = $product->add_to_cart_url();
+				$product_info['stock_quantity']   = $product->get_stock_quantity();
+				$product_info['wc_object']        = $product;
+				$product_info['is_variation']     = $this->is_product_variation( $product );
+
+				if ( $product_info['is_variation'] )
+				{
+					// variation product information
+					$product_info['variation_id'] = $product->variation_id;
+				}
 			}
 
 			$products_list[] = $product_info;
 		}
-		unset( $product_info, $compatible_id, $compatible_sku, $product );
+		unset( $product_info, $compatible_id, $compatible_sku );
 
 		return $products_list;
 	}
@@ -409,5 +441,115 @@ class Products extends Component
 	public function get_assembly_fees_percentage()
 	{
 		return $this->assembly_fees_percentage;
+	}
+
+	/**
+	 * Check if given product is a another product variation
+	 *
+	 * @param WC_Product $product
+	 *
+	 * @return bool
+	 */
+	public function is_product_variation( $product )
+	{
+		return 'WC_Product_Variation' === get_class( $product );
+	}
+
+	/**
+	 * Get assembly configuration by it's key
+	 *
+	 * @param string|null $assembly_key
+	 *
+	 * @return array|bool false if assembly not set
+	 */
+	public function get_assembly_configuration( $assembly_key = null )
+	{
+		if ( empty( $assembly_key ) && isset( $_REQUEST['wc_cp_assembly_key'] ) )
+		{
+			// get the current request key
+			$assembly_key = sanitize_key( $_REQUEST['wc_cp_assembly_key'] );
+		}
+
+		// all registered configs
+		$configs = $this->get_assembly_configurations();
+
+		return array_key_exists( $assembly_key, $configs ) ? array_merge( [ 'key' => $assembly_key ], $configs[ $assembly_key ] ) : false;
+	}
+
+	/**
+	 * Generate new configuration key
+	 *
+	 * @return string
+	 */
+	public function create_new_assembly_configuration()
+	{
+		if ( null === $this->assembly_configurations )
+		{
+			// initialize configs if not yet
+			$this->setup_assembly_configurations();
+		}
+
+		// vars
+		$assembly_key     = '';
+		$configs          = $this->get_assembly_configurations();
+		$configs_reversed = array_reverse( $configs );
+
+		// get the last generated key with no configs yet
+		foreach ( $configs_reversed as $config_key => $config_data )
+		{
+			if ( null === $config_data )
+			{
+				// use this one as it's the last generated one with no data attached yet
+				$assembly_key = $config_key;
+				break;
+			}
+		}
+
+		if ( '' === $assembly_key )
+		{
+			// generate new one
+			$assembly_key = md5( uniqid() );
+		}
+
+		$this->save_assembly_configuration( $assembly_key );
+
+		return [ 'key' => $assembly_key ];
+	}
+
+	/**
+	 * Get available/registered configurations
+	 *
+	 * @return array
+	 */
+	public function &get_assembly_configurations()
+	{
+		if ( null === $this->assembly_configurations )
+		{
+			// initialize configs if not yet
+			$this->setup_assembly_configurations();
+		}
+
+		return $this->assembly_configurations;
+	}
+
+	/**
+	 * Save assembly configuration
+	 *
+	 * @param string $assembly_key
+	 * @param null   $assembly_config
+	 *
+	 * @return void
+	 */
+	public function save_assembly_configuration( $assembly_key, $assembly_config = null )
+	{
+		if ( null === $this->assembly_configurations )
+		{
+			// initialize configs if not yet
+			$this->setup_assembly_configurations();
+		}
+
+		$this->assembly_configurations[ $assembly_key ] = $assembly_config;
+
+		WC()->session->set( $this->assembly_configs_session_key, $this->assembly_configurations );
 	}
 }

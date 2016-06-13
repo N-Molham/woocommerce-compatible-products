@@ -15,7 +15,8 @@ class Ajax_Handler extends Component
 	 * @var array
 	 */
 	protected $public_actions = [
-		'add_compatible_product_to_cart' => 'both',
+		'add_compatible_product_to_cart'     => 'both',
+		'add_compatible_product_to_assembly' => 'both',
 	];
 
 	/**
@@ -65,6 +66,63 @@ class Ajax_Handler extends Component
 	 *
 	 * @return
 	 */
+	public function add_compatible_product_to_assembly()
+	{
+		// security check
+		check_ajax_referer( 'wc_cp_add_to_assembly', 'security' );
+
+		// request args
+		$product_id   = absint( filter_input( INPUT_POST, 'product_id', FILTER_SANITIZE_NUMBER_INT ) );
+		$variation_id = absint( filter_input( INPUT_POST, 'variation_id', FILTER_SANITIZE_NUMBER_INT ) );
+		$quantity     = absint( filter_input( INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT ) );
+
+		if ( 0 === $quantity )
+		{
+			// fallback
+			$quantity = 1;
+		}
+
+		// product attributes
+		$attributes = [ ];
+		foreach ( $_POST as $arg_name => $arg_value )
+		{
+			if ( 0 === strpos( $arg_name, 'attribute_' ) )
+			{
+				$attributes[ $arg_name ] = $arg_value;
+			}
+		}
+
+		if ( empty( $product_id ) || empty( $variation_id ) )
+		{
+			// invalid product
+			$this->error( __( 'Unknown product!', WC_CP_DOMAIN ) );
+		}
+
+		// product validation
+		$product = wc_get_product( $variation_id ? $variation_id : $product_id );
+		if ( false === $product || ( wc_cp_products()->is_product_variation( $product ) && $product_id !== $product->id ) )
+		{
+			// invalid product information
+			$this->error( __( 'Invalid product!', WC_CP_DOMAIN ) );
+		}
+
+		if ( false === $product->has_enough_stock( $quantity ) )
+		{
+			// stock is not enough to cover it
+			$this->error( __( 'Stock os not enough!', WC_CP_DOMAIN ) );
+		}
+
+		$this->dump( $product_id, $variation_id, $quantity, $attributes );
+
+		// error response
+		// $this->error( implode( "\n", wc_get_notices( 'error' ) ) );
+	}
+
+	/**
+	 * Add compatible product into cart
+	 *
+	 * @return
+	 */
 	public function add_compatible_product_to_cart()
 	{
 		// security check
@@ -87,7 +145,7 @@ class Ajax_Handler extends Component
 		if ( empty( $product_id ) || false === wc_get_product( $product_id ) )
 		{
 			// invalid product
-			$this->error( __( 'Unknown product!', 'woocommerce' ) );
+			$this->error( __( 'Unknown product!', WC_CP_DOMAIN ) );
 		}
 
 		// add to cart
