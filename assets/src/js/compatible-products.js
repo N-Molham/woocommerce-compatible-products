@@ -10,9 +10,35 @@
 		}
 
 		// vars
-		var $instructions_btn  = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
-		    $needed_length     = $( '#length_needed' ),
-		    init_need_fittings = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1;
+		var product_data          = $variations_form.data(),
+		    $variations           = $variations_form.find( '.variations' ),
+		    $instructions_btn     = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
+		    $needed_length        = $( '#length_needed' ),
+		    $price_calculator     = $( '#price_calculator' ),
+		    $calculated_amount    = $price_calculator.find( '#length_needed' ),
+		    init_need_fittings    = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1,
+		    current_configuration = null;
+
+		// Update assembly configuration
+		$variations_form.on( 'wc-cp-update-assembly-config', function () {
+			// items holder
+			var config_items = [];
+
+			// main product item
+			config_items.push( {
+				qty  : $calculated_amount.val(),
+				name : '',
+				price: $price_calculator.find( '.total_price .amount' ).text()
+			} );
+
+			console.log( current_configuration );
+		} );
+
+		// when price calculator change
+		$variations_form.on( 'wc-measurement-price-calculator-update', function () {
+			// trigger assembly configuration update
+			$variations_form.trigger( 'wc-cp-update-assembly-config' );
+		} );
 
 		// move button to new location
 		$( '<tr><td colspan="2"></td></tr>' ).insertAfter( $needed_length.closest( 'tr' ) ).find( 'td' ).append( $instructions_btn );
@@ -63,21 +89,14 @@
 			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
 				if ( typeof response === 'object' ) {
 					// json response
-					if ( 'fragments' in response ) {
+					if ( response.success ) {
 						// success
 						$this.button( 'added' );
 
-						// update mini cart data
-						for ( var css_selector in response.fragments ) {
-							if ( response.fragments.hasOwnProperty( css_selector ) ) {
-								// query the fragment position
-								var $selector_element = $( css_selector );
-								if ( $selector_element.length ) {
-									// replace with the new information
-									$selector_element.replaceWith( response.fragments[ css_selector ] );
-								}
-							}
-						}
+						current_configuration = response.data;
+
+						// trigger assembly configuration update
+						$variations_form.trigger( 'wc-cp-update-assembly-config' );
 					} else {
 						// error
 						$this.button( 'reset' );
@@ -90,5 +109,9 @@
 				}
 			}, 'json' );
 		} );
+
+		function append_config_item( name, qty, price ) {
+			console.log( arguments );
+		}
 	} );
 })( jQuery, window );

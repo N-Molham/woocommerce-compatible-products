@@ -75,6 +75,15 @@ class Ajax_Handler extends Component
 		$product_id   = absint( filter_input( INPUT_POST, 'product_id', FILTER_SANITIZE_NUMBER_INT ) );
 		$variation_id = absint( filter_input( INPUT_POST, 'variation_id', FILTER_SANITIZE_NUMBER_INT ) );
 		$quantity     = absint( filter_input( INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT ) );
+		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'assembly_key', FILTER_SANITIZE_STRING ) );
+
+		// assembly configuration
+		$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		if ( false === $assembly_config )
+		{
+			// invalid config
+			$this->error( __( 'Invalid target assembly configuration!', WC_CP_DOMAIN ) );
+		}
 
 		if ( 0 === $quantity )
 		{
@@ -112,10 +121,11 @@ class Ajax_Handler extends Component
 			$this->error( __( 'Stock os not enough!', WC_CP_DOMAIN ) );
 		}
 
-		$this->dump( $product_id, $variation_id, $quantity, $attributes );
+		// save changes
+		$assembly_config = wc_cp_products()->add_assembly_configuration_item( $assembly_config, compact( 'product_id', 'variation_id', 'quantity', 'attributes' ) );
 
-		// error response
-		// $this->error( implode( "\n", wc_get_notices( 'error' ) ) );
+		// success response
+		$this->success( $assembly_config );
 	}
 
 	/**
