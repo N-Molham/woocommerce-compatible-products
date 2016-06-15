@@ -1,5 +1,7 @@
 <?php namespace WooCommerce\Compatible_Products;
 
+use WC_Product_Variation;
+
 /**
  * Frontend logic
  *
@@ -105,14 +107,22 @@ class Frontend extends Component
 	 */
 	public function append_compatible_products_to_variation_data( $variation_data )
 	{
+		// product variation information
+		/* @var $variation_product WC_Product_Variation */
+		$variation_product = wc_get_product( $variation_data['variation_id'] );
+
+		// variation name
+		$variation_data['variation_name'] = $variation_product->get_title() . ' - ' . $variation_product->get_formatted_variation_attributes( true );
+
 		// append list to variation data array
 		$variation_data['_wc_cp_compatible_products'] = wc_cp_products()->get_product_compatible_products_list( $variation_data['variation_id'], true );
 
-		// current assembly configration
-		$assembly_config = wc_cp_products()->get_assembly_configuration();
+		// current assembly configuration
+		$assembly_config = wc_cp_products()->get_assembly_configuration( null, $variation_data['variation_id'] );
 		if ( false === $assembly_config )
 		{
-			$assembly_config = wc_cp_products()->create_new_assembly_configuration();
+			// generate new one
+			$assembly_config = wc_cp_products()->create_new_assembly_configuration( $variation_data['variation_id'] );
 		}
 
 		if ( isset( $variation_data['_wc_cp_compatible_products'][0] ) )

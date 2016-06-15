@@ -73,7 +73,13 @@ class Products extends Component
 	 */
 	public function setup_assembly_configurations()
 	{
-		$this->assembly_configurations = WC()->session->get( $this->assembly_configs_session_key, [ ] );
+		// default value
+		$this->assembly_configurations = [ ];
+		if ( array_key_exists( $this->assembly_configs_session_key, $_SESSION ) )
+		{
+			// set the current value
+			$this->assembly_configurations = $_SESSION[ $this->assembly_configs_session_key ];
+		}
 	}
 
 	/**
@@ -452,17 +458,18 @@ class Products extends Component
 	 */
 	public function is_product_variation( $product )
 	{
-		return 'WC_Product_Variation' === get_class( $product );
+		return 'variation' === $product->get_type() || 'WC_Product_Variation' === get_class( $product );
 	}
 
 	/**
 	 * Get assembly configuration by it's key
 	 *
 	 * @param string|null $assembly_key
+	 * @param int|null    $product_id
 	 *
 	 * @return array|bool false if assembly not set
 	 */
-	public function get_assembly_configuration( $assembly_key = null )
+	public function get_assembly_configuration( $assembly_key = null, $product_id = null )
 	{
 		if ( empty( $assembly_key ) && isset( $_REQUEST['wc_cp_assembly_key'] ) )
 		{
@@ -471,17 +478,54 @@ class Products extends Component
 		}
 
 		// all registered configs
-		$configs = $this->get_assembly_configurations();
+		$configs       = $this->get_assembly_configurations();
+		$target_config = null;
 
-		return array_key_exists( $assembly_key, $configs ) ? array_merge( [ 'key' => $assembly_key ], $configs[ $assembly_key ] ) : false;
+		if ( null !== $assembly_key && array_key_exists( $assembly_key, $configs ) )
+		{
+			// get configuration by key
+			$target_config = $configs[ $assembly_key ];
+		}
+
+		if ( null !== $product_id )
+		{
+			// get configuration by main product id
+			foreach ( $configs as $config_key => $config_info )
+			{
+				if ( !is_array( $config_info ) || !isset( $config_info['product_id'] ) )
+				{
+					// skip empty configs
+					continue;
+				}
+
+				if ( $product_id === $config_info['product_id'] )
+				{
+					// config found
+					$assembly_key  = $config_key;
+					$target_config = $config_info;
+					break;
+				}
+			}
+		}
+
+		if ( null !== $target_config )
+		{
+			// config found
+			return array_merge( [ 'key' => $assembly_key ], $target_config );
+		}
+
+		// no configuration found
+		return false;
 	}
 
 	/**
 	 * Generate new configuration key
 	 *
+	 * @param int $product_id
+	 *
 	 * @return string
 	 */
-	public function create_new_assembly_configuration()
+	public function create_new_assembly_configuration( $product_id )
 	{
 		if ( null === $this->assembly_configurations )
 		{
@@ -511,9 +555,12 @@ class Products extends Component
 			$assembly_key = md5( uniqid() );
 		}
 
-		$this->save_assembly_configuration( $assembly_key );
+		$this->save_assembly_configuration( $assembly_key, [ 'product_id' => $product_id ] );
 
-		return [ 'key' => $assembly_key ];
+		return [
+			'key'        => $assembly_key,
+			'product_id' => $product_id,
+		];
 	}
 
 	/**
@@ -535,8 +582,8 @@ class Products extends Component
 	/**
 	 * Save assembly configuration
 	 *
-	 * @param string $assembly_key
-	 * @param null   $assembly_config
+	 * @param string     $assembly_key
+	 * @param array|null $assembly_config
 	 *
 	 * @return void
 	 */
@@ -550,6 +597,53 @@ class Products extends Component
 
 		$this->assembly_configurations[ $assembly_key ] = $assembly_config;
 
-		WC()->session->set( $this->assembly_configs_session_key, $this->assembly_configurations );
+		$_SESSION[ $this->assembly_configs_session_key ] = $this->assembly_configurations;
+	}
+
+	/**
+	 * Update/add item to assembly configuration
+	 *
+	 * @param array $assembly_config
+	 * @param array $new_item
+	 *
+	 * @return array
+	 */
+	public function add_assembly_configuration_item( $assembly_config, $new_item )
+	{
+		if ( is_string( $assembly_config ) )
+		{
+			// get assembly info
+			$assembly_config = $this->get_assembly_configuration( $assembly_config );
+		}
+
+		if ( !isset( $assembly_config['parts'] ) )
+		{
+			// parts container
+			$assembly_config['parts'] = [ ];
+		}
+
+		$duplicated = false;
+		foreach ( $assembly_config['parts'] as $part_index => $part_info )
+		{
+			// look for item to update instead of adding as new
+			if ( $part_info['product_id'] === $new_item['product_id'] && $part_info['variation_id'] === $new_item['variation_id'] )
+			{
+				$duplicated = true;
+				$assembly_config['parts'][ $part_index ] = $new_item;
+				break;
+			}
+		}
+
+		if ( false === $duplicated )
+		{
+			// add new item
+			$assembly_config['parts'][] = $new_item;
+		}
+
+		// save update
+		$this->save_assembly_configuration( $assembly_config['key'], $assembly_config );
+
+		// return the updated one
+		return $assembly_config;
 	}
 }
