@@ -604,11 +604,11 @@ class Products extends Component
 	 * Update/add item to assembly configuration
 	 *
 	 * @param array $assembly_config
-	 * @param array $new_item
+	 * @param array $new_part
 	 *
 	 * @return array
 	 */
-	public function add_assembly_configuration_item( $assembly_config, $new_item )
+	public function add_assembly_configuration_item( $assembly_config, $new_part )
 	{
 		if ( is_string( $assembly_config ) )
 		{
@@ -623,13 +623,14 @@ class Products extends Component
 		}
 
 		$duplicated = false;
-		foreach ( $assembly_config['parts'] as $part_index => $part_info )
+		foreach ( $assembly_config['parts'] as $part_index => &$part_info )
 		{
 			// look for item to update instead of adding as new
-			if ( $part_info['product_id'] === $new_item['product_id'] && $part_info['variation_id'] === $new_item['variation_id'] )
+			if ( $part_info['product_id'] === $new_part['product_id'] && $part_info['variation_id'] === $new_part['variation_id'] )
 			{
 				$duplicated = true;
-				$assembly_config['parts'][ $part_index ] = $new_item;
+				$new_part['quantity'] += $part_info['quantity'];
+				$part_info = $new_part;
 				break;
 			}
 		}
@@ -637,7 +638,7 @@ class Products extends Component
 		if ( false === $duplicated )
 		{
 			// add new item
-			$assembly_config['parts'][] = $new_item;
+			$assembly_config['parts'][] = $new_part;
 		}
 
 		// save update

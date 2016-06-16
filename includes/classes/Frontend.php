@@ -242,6 +242,14 @@ class Frontend extends Component
 
 		// load main JS file
 		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . Helpers::enqueue_base_dir() . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
+		wp_localize_script( 'wc-cp-compatible-products', 'wc_compatible_products_params', [
+			'woocommerce_currency_symbol'    => get_woocommerce_currency_symbol(),
+			'woocommerce_price_num_decimals' => wc_get_price_decimals(),
+			'woocommerce_currency_pos'       => get_option( 'woocommerce_currency_pos' ),
+			'woocommerce_price_decimal_sep'  => stripslashes( get_option( 'woocommerce_price_decimal_sep' ) ),
+			'woocommerce_price_thousand_sep' => stripslashes( get_option( 'woocommerce_price_thousand_sep' ) ),
+			'woocommerce_price_trim_zeros'   => get_option( 'woocommerce_price_trim_zeros' ),
+		] );
 	}
 
 	/**
