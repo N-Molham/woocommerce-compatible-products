@@ -506,6 +506,23 @@ class Products extends Component
 					break;
 				}
 			}
+			unset( $config_key, $config_info );
+		}
+
+		if ( null === $target_config )
+		{
+			// get the last generated key with no configs yet
+			$configs_reversed = array_reverse( $configs );
+			foreach ( $configs_reversed as $config_key => $config_data )
+			{
+				if ( !array_key_exists( 'parts', $config_data ) )
+				{
+					// use this one as it's the last generated one with no data attached yet
+					$assembly_key  = $config_key;
+					$target_config = $config_data;
+					break;
+				}
+			}
 		}
 
 		if ( null !== $target_config )

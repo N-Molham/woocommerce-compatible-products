@@ -118,7 +118,7 @@ class Frontend extends Component
 		$variation_data['_wc_cp_compatible_products'] = wc_cp_products()->get_product_compatible_products_list( $variation_data['variation_id'], true );
 
 		// current assembly configuration
-		$assembly_config = wc_cp_products()->get_assembly_configuration( null, $variation_data['variation_id'] );
+		$assembly_config = wc_cp_products()->get_assembly_configuration();
 		if ( false === $assembly_config )
 		{
 			// generate new one
