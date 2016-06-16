@@ -87,7 +87,7 @@ $panel_data      = array_map( function ( $product )
 	</div>
 </div>
 
-<div class="panel panel-primary wc-cp-assembly-config hidden">
+<div class="panel panel-primary wc-cp-assembly-config hidden" data-config="<?php echo esc_attr( wp_json_encode( $assembly_config ) ) ?>">
 	<div class="panel-heading"><?php _e( 'Review your assembly configuration', 'woocommerce' ); ?></div>
 	<div class="panel-body">
 		<table class="table">

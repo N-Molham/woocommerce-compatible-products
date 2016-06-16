@@ -26,7 +26,7 @@
 			var config_items = [];
 
 			// Assembly configuration
-			if ( null !== current_config ) {
+			if ( current_config && 'parts' in current_config ) {
 				var parts = current_config.parts;
 				for ( i = 0, len = parts.length; i < len; i++ ) {
 					config_items.push( setup_assembly_config_item( parts[ i ] ) );
@@ -39,9 +39,16 @@
 			// populate config table
 			var rows = [];
 			for ( var i = 0, len = config_items.length; i < len; i++ ) {
-				rows.push( '<tr><td class="qty">' + config_items[ i ].qty + '</td>' +
-					'<td class="name">' + config_items[ i ].name + '</td>' +
-					'<td class="price">' + config_items[ i ].price + '</td></tr>' );
+				var config_item = config_items[ i ];
+
+				if ( config_item.is_assembly ) {
+					// append remove button to name
+					config_item.name += '&nbsp;&nbsp;<a href="javascript:void(0)"><i class="fa fa-times"></i></a>';
+				}
+
+				rows.push( '<tr><td class="qty">' + config_item.qty + '</td>' +
+					'<td class="name">' + config_item.name + '</td>' +
+					'<td class="price">' + config_item.price + '</td></tr>' );
 			}
 			$variations_form.find( '.wc-cp-config-container' ).html( rows.join( '' ) );
 		} );
@@ -82,6 +89,12 @@
 
 			// set the new compatible products list
 			compatible_products = $variations_form.find( '.wc-cp-products-list' ).data( 'products' );
+
+			// set the current assembly configuration
+			current_config = $variations_form.find( '.wc-cp-assembly-config' ).data( 'config' );
+
+			// trigger assembly configuration update
+			$variations_form.trigger( 'wc-cp-update-assembly-config' );
 		} );
 
 		// add product to cart click
@@ -108,6 +121,7 @@
 						// success
 						$this.button( 'added' );
 
+						// update the current config with the updated info
 						current_config = response.data;
 
 						// trigger assembly configuration update
@@ -137,9 +151,11 @@
 			main_product = main_product || false;
 
 			var part_item = {
-				qty  : 0,
-				name : '-',
-				price: ''
+				data_obj   : item_data,
+				qty        : 0,
+				name       : '-',
+				price      : '',
+				is_assembly: true // is assembly part or not
 			};
 
 			if ( main_product ) {
@@ -148,8 +164,10 @@
 					qty_unit = wc_price_calculator_params.product_price_unit;
 				}
 
-				part_item.qty   = $calculated_amount.val() + ' ' + qty_unit;
-				part_item.price = '<span class="amount">' + $price_calculator.find( '.total_price .amount' ).text() + '</span>';
+				part_item.qty         = $calculated_amount.val();
+				part_item.qty         = parseFloat( part_item.qty > 0 ? part_item.qty : '0' ).toString() + ' ' + qty_unit;
+				part_item.price       = '<span class="amount">' + $price_calculator.find( '.product_price .amount' ).text() + '</span>';
+				part_item.is_assembly = false;
 
 				// fetch name
 				if ( 'product_variations' in item_data ) {
