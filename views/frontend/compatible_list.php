@@ -93,7 +93,7 @@ $panel_data      = array_map( function ( $product )
 		<table class="table">
 			<thead>
 			<tr>
-				<th><?php _e( 'Qty', WC_CP_DOMAIN ); ?></th>
+				<th width="15%"><?php _e( 'Qty', WC_CP_DOMAIN ); ?></th>
 				<th><?php _e( 'Product', WC_CP_DOMAIN ); ?></th>
 				<th><?php _e( 'Price', WC_CP_DOMAIN ); ?></th>
 			</tr>
