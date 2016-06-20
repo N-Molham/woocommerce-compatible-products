@@ -89,7 +89,7 @@
 
 		// when price calculator change
 		$variations_form.on( 'wc-measurement-price-calculator-update', function () {
-			if ( null !== current_config ) {
+			if ( current_config ) {
 				$.post( wc_add_to_cart_params.ajax_url, {
 					action      : 'update_assembly_amount',
 					amount      : $calculated_amount.val(),
@@ -140,15 +140,18 @@
 			// set the current assembly configuration
 			current_config = $variations_form.find( '.wc-cp-assembly-config' ).data( 'config' );
 
-			if ( win.history && win.history.replaceState ) {
-				// change the URL with the assembly key
-				var search_replace = location.search;
-				if ( search_replace.indexOf( 'wc_cp_assembly_key' ) == -1 ) {
-					search_replace += search_replace.indexOf( '?' ) == -1 ? '?' : '&';
-					search_replace += 'wc_cp_assembly_key=' + current_config.key;
-					history.replaceState( null, null, search_replace );
-				}
-			}
+			// set amount new value
+			$calculated_amount.val( current_config.quantity );
+
+			/*if ( win.history && win.history.replaceState ) {
+			 // change the URL with the assembly key
+			 var search_replace = location.search;
+			 if ( search_replace.indexOf( 'wc_cp_assembly_key' ) == -1 ) {
+			 search_replace += search_replace.indexOf( '?' ) == -1 ? '?' : '&';
+			 search_replace += 'wc_cp_assembly_key=' + current_config.key;
+			 history.replaceState( null, null, search_replace );
+			 }
+			 }*/
 
 			// trigger assembly configuration update
 			$variations_form.trigger( 'wc-cp-update-assembly-config' );
@@ -163,7 +166,7 @@
 			    request_data = $this.data( 'args' );
 
 			// set quantity
-			$qty_input = $variations_form.find( 'input[name="wc_cp_quantity[' + request_data.variation_id + ']"]' );
+			var $qty_input = $variations_form.find( 'input[name="wc_cp_quantity[' + request_data.variation_id + ']"]' );
 			if ( $qty_input.length !== 1 ) {
 				request_data.quantity = 1;
 			} else {
@@ -180,6 +183,9 @@
 
 						// update the current config with the updated info
 						current_config = response.data;
+
+						// reset qty input
+						$qty_input.val( 1 );
 
 						// trigger assembly configuration update
 						$variations_form.trigger( 'wc-cp-update-assembly-config' );
