@@ -527,6 +527,12 @@ class Products extends Component
 
 		if ( null !== $target_config )
 		{
+			if ( !isset( $target_config['quantity'] ) )
+			{
+				// default main product quantity
+				$target_config['quantity'] = 1;
+			}
+
 			// config found
 			return array_merge( [ 'key' => $assembly_key ], $target_config );
 		}
@@ -572,12 +578,14 @@ class Products extends Component
 			$assembly_key = md5( uniqid() );
 		}
 
-		$this->save_assembly_configuration( $assembly_key, [ 'product_id' => $product_id ] );
-
-		return [
-			'key'        => $assembly_key,
+		$new_config = [
 			'product_id' => $product_id,
+			'quantity'   => 1,
 		];
+
+		$this->save_assembly_configuration( $assembly_key, $new_config );
+
+		return array_merge( [ 'key' => $assembly_key ], $new_config );
 	}
 
 	/**
@@ -657,6 +665,74 @@ class Products extends Component
 			// add new item
 			$assembly_config['parts'][] = $new_part;
 		}
+
+		// save update
+		$this->save_assembly_configuration( $assembly_config['key'], $assembly_config );
+
+		// return the updated one
+		return $assembly_config;
+	}
+
+	/**
+	 * Remove item from assembly configuration
+	 *
+	 * @param array $assembly_config
+	 * @param int   $product_id
+	 * @param int   $variation_id
+	 *
+	 * @return array
+	 */
+	public function remove_assembly_configuration_item( $assembly_config, $product_id, $variation_id )
+	{
+		if ( is_string( $assembly_config ) )
+		{
+			// get assembly info
+			$assembly_config = $this->get_assembly_configuration( $assembly_config );
+		}
+
+		if ( !isset( $assembly_config['parts'] ) )
+		{
+			// parts container
+			$assembly_config['parts'] = [ ];
+		}
+
+		foreach ( $assembly_config['parts'] as $part_index => $part_info )
+		{
+			// look for item to update instead of adding as new
+			if ( $part_info['product_id'] === $product_id && $part_info['variation_id'] === $variation_id )
+			{
+				unset( $assembly_config['parts'][ $part_index ] );
+				break;
+			}
+		}
+
+		//
+		$assembly_config['parts'] = array_values( $assembly_config['parts'] );
+
+		// save update
+		$this->save_assembly_configuration( $assembly_config['key'], $assembly_config );
+
+		// return the updated one
+		return $assembly_config;
+	}
+
+	/**
+	 * Update assembly configuration main item quantity
+	 *
+	 * @param array $assembly_config
+	 * @param float $quantity
+	 *
+	 * @return array
+	 */
+	public function update_assembly_configuration_quantity( $assembly_config, $quantity )
+	{
+		if ( is_string( $assembly_config ) )
+		{
+			// get assembly info
+			$assembly_config = $this->get_assembly_configuration( $assembly_config );
+		}
+
+		$assembly_config['quantity'] = $quantity;
 
 		// save update
 		$this->save_assembly_configuration( $assembly_config['key'], $assembly_config );
