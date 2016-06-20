@@ -1,7 +1,7 @@
 /**
  * Created by nabeel on 5/18/16.
  */
-(function ( $, w, undefined ) {
+(function ( $, win, undefined ) {
 	$( function () {
 		var $variations_form = $( '.variations_form' );
 		if ( $variations_form.length < 1 ) {
@@ -13,7 +13,6 @@
 		var product_data        = $variations_form.data(),
 		    $variation_id       = $variations_form.find( 'input[name=variation_id]' ),
 		    $instructions_btn   = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
-		    $needed_length      = $( '#length_needed' ),
 		    $price_calculator   = $( '#price_calculator' ),
 		    $calculated_amount  = $price_calculator.find( '#length_needed' ),
 		    init_need_fittings  = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1,
@@ -43,7 +42,9 @@
 
 				if ( config_item.is_assembly ) {
 					// append remove button to name
-					config_item.name += '&nbsp;&nbsp;<a href="javascript:void(0)"><i class="fa fa-times"></i></a>';
+					config_item.name += '&nbsp;&nbsp;<a href="javascript:void(0)" class="wc-cp-remove-assembly" ' +
+						'data-pid="' + config_item.data_obj.product_id + '" data-vid="' + config_item.data_obj.variation_id + '">' +
+						'<i class="fa fa-times"></i></a>';
 				}
 
 				rows.push( '<tr><td class="qty">' + config_item.qty + '</td>' +
@@ -53,14 +54,60 @@
 			$variations_form.find( '.wc-cp-config-container' ).html( rows.join( '' ) );
 		} );
 
+		/* Assembly configuration item remove button clicked*/
+		$variations_form.on( 'click', '.wc-cp-remove-assembly', function () {
+			var $this        = $( this ),
+			    request_data = $this.data();
+
+			// disable button
+			$this.prop( 'disabled', true );
+
+			// additional props
+			request_data.action       = 'remove_compatible_product_from_assembly';
+			request_data.security     = wc_compatible_products_params.assembly_remove_nonce;
+			request_data.assembly_key = current_config.key;
+
+			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
+				if ( 'success' in response ) {
+					if ( response.success ) {
+						// update the configuration object
+						current_config = response.data;
+
+						// trigger assembly configuration update
+						$variations_form.trigger( 'wc-cp-update-assembly-config' );
+					} else {
+						alert( response.data );
+					}
+				} else {
+					console.log( response );
+				}
+			}, 'json' ).always( function () {
+				// re-enable button
+				$this.prop( 'disabled', false );
+			} );
+		} );
+
 		// when price calculator change
 		$variations_form.on( 'wc-measurement-price-calculator-update', function () {
-			// trigger assembly configuration update
-			$variations_form.trigger( 'wc-cp-update-assembly-config' );
+			if ( null !== current_config ) {
+				$.post( wc_add_to_cart_params.ajax_url, {
+					action      : 'update_assembly_amount',
+					amount      : $calculated_amount.val(),
+					assembly_key: current_config.key,
+					security    : wc_compatible_products_params.assembly_quantity_nonce
+				}, function ( response ) {
+					if ( response.success ) {
+						// trigger assembly configuration update
+						$variations_form.trigger( 'wc-cp-update-assembly-config' );
+					} else {
+						alert( response.data );
+					}
+				}, 'json' );
+			}
 		} );
 
 		// move button to new location
-		$( '<tr><td colspan="2"></td></tr>' ).insertAfter( $needed_length.closest( 'tr' ) ).find( 'td' ).append( $instructions_btn );
+		$( '<tr><td colspan="2"></td></tr>' ).insertAfter( $calculated_amount.closest( 'tr' ) ).find( 'td' ).append( $instructions_btn );
 
 		// when show compatible products checkbox change
 		$variations_form.on( 'change wc-cp-change', '.wc-cp-need-compatible', function ( e ) {
@@ -92,6 +139,16 @@
 
 			// set the current assembly configuration
 			current_config = $variations_form.find( '.wc-cp-assembly-config' ).data( 'config' );
+
+			if ( win.history && win.history.replaceState ) {
+				// change the URL with the assembly key
+				var search_replace = location.search;
+				if ( search_replace.indexOf( 'wc_cp_assembly_key' ) == -1 ) {
+					search_replace += search_replace.indexOf( '?' ) == -1 ? '?' : '&';
+					search_replace += 'wc_cp_assembly_key=' + current_config.key;
+					history.replaceState( null, null, search_replace );
+				}
+			}
 
 			// trigger assembly configuration update
 			$variations_form.trigger( 'wc-cp-update-assembly-config' );
@@ -164,9 +221,25 @@
 					qty_unit = wc_price_calculator_params.product_price_unit;
 				}
 
-				part_item.qty         = $calculated_amount.val();
-				part_item.qty         = parseFloat( part_item.qty > 0 ? part_item.qty : '0' ).toString() + ' ' + qty_unit;
-				part_item.price       = '<span class="amount">' + $price_calculator.find( '.product_price .amount' ).text() + '</span>';
+				// item quantity
+				part_item.qty = $calculated_amount.val();
+				part_item.qty = parseFloat( part_item.qty > 0 ? part_item.qty : '0' );
+				if ( 0 === part_item.qty && current_config ) {
+					// use current configuration quantity
+					part_item.qty = current_config.quantity;
+					$calculated_amount.val( part_item.qty );
+
+					// trigger calculator change
+					$variations_form.trigger( 'wc-measurement-price-calculator-update' );
+				}
+
+				// append measure unit
+				part_item.qty = part_item.qty.toString() + ' ' + qty_unit;
+
+				// item price
+				part_item.price = '<span class="amount">' + $price_calculator.find( '.product_price .amount' ).text() + '</span>';
+
+				// is assembly item or not
 				part_item.is_assembly = false;
 
 				// fetch name

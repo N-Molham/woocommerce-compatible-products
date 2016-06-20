@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WooCommerce Compatible Products and Measurements 1.3.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/init\n"
-"POT-Creation-Date: 2016-06-15 17:24:47+00:00\n"
+"POT-Creation-Date: 2016-06-20 15:49:16+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -24,19 +24,19 @@ msgstr ""
 "X-Poedit-Bookmarks: \n"
 "X-Textdomain-Support: yes\n"
 
-#: includes/classes/Ajax_Handler.php:85
+#: includes/classes/Ajax_Handler.php:85 includes/classes/Ajax_Handler.php:113
 msgid "Invalid target assembly configuration!"
 msgstr ""
 
-#: includes/classes/Ajax_Handler.php:107 includes/classes/Ajax_Handler.php:158
+#: includes/classes/Ajax_Handler.php:135
 msgid "Unknown product!"
 msgstr ""
 
-#: includes/classes/Ajax_Handler.php:115
+#: includes/classes/Ajax_Handler.php:143
 msgid "Invalid product!"
 msgstr ""
 
-#: includes/classes/Ajax_Handler.php:121
+#: includes/classes/Ajax_Handler.php:149
 msgid "Stock os not enough!"
 msgstr ""
 

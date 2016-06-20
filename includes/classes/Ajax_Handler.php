@@ -15,8 +15,9 @@ class Ajax_Handler extends Component
 	 * @var array
 	 */
 	protected $public_actions = [
-		'add_compatible_product_to_cart'     => 'both',
-		'add_compatible_product_to_assembly' => 'both',
+		'add_compatible_product_to_cart'          => 'both',
+		'add_compatible_product_to_assembly'      => 'both',
+		'remove_compatible_product_from_assembly' => 'both',
 	];
 
 	/**
@@ -59,6 +60,59 @@ class Ajax_Handler extends Component
 				}
 			}
 		}
+	}
+
+	/**
+	 * Update assembly main product item quantity
+	 *
+	 * @return void
+	 */
+	public function update_assembly_amount()
+	{
+		// security check
+		check_ajax_referer( 'wc_cp_update_assembly_main_product_quantity', 'security' );
+
+		// request args
+		$quantity     = abs( filter_input( INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT ) );
+		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'assembly_key', FILTER_SANITIZE_STRING ) );
+
+		// assembly configuration
+		$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		if ( false === $assembly_config )
+		{
+			// invalid config
+			$this->error( __( 'Invalid target assembly configuration!', WC_CP_DOMAIN ) );
+		}
+
+		// update configuration and return the new version
+		$this->success( wc_cp_products()->update_assembly_configuration_quantity( $assembly_config, $quantity ) );
+	}
+
+	/**
+	 * Remove assembly item from configuration
+	 *
+	 * @return void
+	 */
+	public function remove_compatible_product_from_assembly()
+	{
+		// security check
+		check_ajax_referer( 'wc_cp_remove_assembly_item', 'security' );
+
+		// request args
+		$product_id   = absint( filter_input( INPUT_POST, 'pid', FILTER_SANITIZE_NUMBER_INT ) );
+		$variation_id = absint( filter_input( INPUT_POST, 'vid', FILTER_SANITIZE_NUMBER_INT ) );
+		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'assembly_key', FILTER_SANITIZE_STRING ) );
+
+		// assembly configuration
+		$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		if ( false === $assembly_config )
+		{
+			// invalid config
+			$this->error( __( 'Invalid target assembly configuration!', WC_CP_DOMAIN ) );
+		}
+
+		// update configuration and return the new version
+		$this->success( wc_cp_products()->remove_assembly_configuration_item( $assembly_config, $product_id, $variation_id ) );
 	}
 
 	/**
@@ -126,49 +180,6 @@ class Ajax_Handler extends Component
 
 		// success response
 		$this->success( $assembly_config );
-	}
-
-	/**
-	 * Add compatible product into cart
-	 *
-	 * @return
-	 */
-	public function add_compatible_product_to_cart()
-	{
-		// security check
-		check_ajax_referer( 'wc_cp_add_to_cart', 'security' );
-
-		// request args
-		$product_id   = absint( filter_input( INPUT_POST, 'product_id', FILTER_SANITIZE_NUMBER_INT ) );
-		$variation_id = absint( filter_input( INPUT_POST, 'variation_id', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// product attributes
-		$attributes = [ ];
-		foreach ( $_POST as $arg_name => $arg_value )
-		{
-			if ( 0 === strpos( $arg_name, 'attribute_' ) )
-			{
-				$attributes[ $arg_name ] = $arg_value;
-			}
-		}
-
-		if ( empty( $product_id ) || false === wc_get_product( $product_id ) )
-		{
-			// invalid product
-			$this->error( __( 'Unknown product!', WC_CP_DOMAIN ) );
-		}
-
-		// add to cart
-		$added_to_cart = WC()->cart->add_to_cart( $product_id, 1, $variation_id, $attributes );
-
-		if ( $added_to_cart && wc_notice_count( 'error' ) === 0 )
-		{
-			// success
-			WC_AJAX::get_refreshed_fragments();
-		}
-
-		// error response
-		$this->error( implode( "\n", wc_get_notices( 'error' ) ) );
 	}
 
 	/**
