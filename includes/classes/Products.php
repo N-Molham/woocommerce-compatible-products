@@ -471,18 +471,18 @@ class Products extends Component
 	 */
 	public function get_assembly_configuration( $assembly_key = null, $product_id = null )
 	{
-		if ( empty( $assembly_key ) && isset( $_REQUEST['wc_cp_assembly_key'] ) )
-		{
-			// get the current request key
-			$assembly_key = sanitize_key( $_REQUEST['wc_cp_assembly_key'] );
-		}
-
 		// all registered configs
 		$configs       = $this->get_assembly_configurations();
 		$target_config = null;
 
-		if ( null !== $assembly_key && array_key_exists( $assembly_key, $configs ) )
+		if ( null !== $assembly_key )
 		{
+			if ( !array_key_exists( $assembly_key, $configs ) )
+			{
+				// not found
+				return false;
+			}
+
 			// get configuration by key
 			$target_config = $configs[ $assembly_key ];
 		}
@@ -507,6 +507,12 @@ class Products extends Component
 				}
 			}
 			unset( $config_key, $config_info );
+
+			if ( null === $target_config )
+			{
+				// not found
+				return false;
+			}
 		}
 
 		if ( null === $target_config )

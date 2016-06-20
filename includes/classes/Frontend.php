@@ -53,6 +53,27 @@ class Frontend extends Component
 
 		// Product variations data filter
 		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
+
+		// WooCommerce item data to save to add to the cart
+		add_filter( 'woocommerce_add_cart_item_data', [ &$this, 'add_assembly_config_to_cart_item' ], 10, 3 );
+	}
+
+	/**
+	 * Add assembly configuration to cart item
+	 *
+	 * @param array $cart_item_data
+	 * @param int   $product_id
+	 * @param int   $variation_id
+	 *
+	 * @return array
+	 */
+	public function add_assembly_config_to_cart_item( $cart_item_data, $product_id, $variation_id )
+	{
+		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'wc_cp_assembly_config_key', FILTER_SANITIZE_STRING ) );
+		dump( $product_id, $variation_id, wc_cp_products()->get_assembly_configuration( $assembly_key ), $cart_item_data );
+		die();
+
+		return $cart_item_data;
 	}
 
 	/**
@@ -117,8 +138,21 @@ class Frontend extends Component
 		// append list to variation data array
 		$variation_data['_wc_cp_compatible_products'] = wc_cp_products()->get_product_compatible_products_list( $variation_data['variation_id'], true );
 
-		// current assembly configuration
-		$assembly_config = wc_cp_products()->get_assembly_configuration();
+		// get assembly configuration
+		$assembly_config = false;
+		$assembly_key    = sanitize_key( filter_input( INPUT_GET, 'wc_cp_assembly_key', FILTER_SANITIZE_STRING ) );
+		if ( '' !== $assembly_key )
+		{
+			// get by the key
+			$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		}
+
+		if ( false === $assembly_config || $variation_data['variation_id'] !== $assembly_config['product_id'] )
+		{
+			// get config for the current variation
+			$assembly_config = wc_cp_products()->get_assembly_configuration( null, $variation_data['variation_id'] );
+		}
+
 		if ( false === $assembly_config )
 		{
 			// generate new one
