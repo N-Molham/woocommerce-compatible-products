@@ -1,5 +1,8 @@
 <?php namespace WooCommerce\Compatible_Products;
 
+use WC_Cart;
+use WC_Order_Item_Meta;
+use WC_Product;
 use WC_Product_Variation;
 
 /**
@@ -29,19 +32,19 @@ class Frontend extends Component
 		add_filter( 'woocommerce_cart_totals_fee_html', [ &$this, 'add_assembly_fee_remove_button' ], 10, 2 );
 
 		// before loading cart template
-		add_action( 'woocommerce_check_cart_items', [ &$this, 'add_assembly_notice' ] );
+		// add_action( 'woocommerce_check_cart_items', [ &$this, 'add_assembly_notice' ] );
 
 		// load JS asset(s)
 		add_action( 'wp_enqueue_scripts', [ &$this, 'enqueues' ] );
 
 		// WooCommerce notices types
-		add_filter( 'woocommerce_notice_types', [ &$this, 'add_assembly_notice_type' ] );
+		// add_filter( 'woocommerce_notice_types', [ &$this, 'add_assembly_notice_type' ] );
 
 		// WooCommerce before order submit button
-		add_action( 'woocommerce_review_order_before_submit', [ &$this, 'order_assembly_fees_confirm_checkbox' ] );
+		// add_action( 'woocommerce_review_order_before_submit', [ &$this, 'order_assembly_fees_confirm_checkbox' ] );
 
 		// WooCommerce before checkout process
-		add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
+		// add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
 
 		// WooCommerce before product's add to cart button
 		add_action( 'woocommerce_before_add_to_cart_button', [
@@ -54,8 +57,228 @@ class Frontend extends Component
 		// Product variations data filter
 		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
 
-		// WooCommerce item data to save to add to the cart
+		// WooCommerce product item extra data to save to add to the cart
 		add_filter( 'woocommerce_add_cart_item_data', [ &$this, 'add_assembly_config_to_cart_item' ], 10, 3 );
+
+		// WooCommerce product item data to be saved in the cart
+		add_filter( 'woocommerce_add_cart_item', [ &$this, 'set_assembly_config_price_in_cart' ], 50 );
+
+		add_action( 'woocommerce_before_calculate_totals', [ &$this, 'set_assembly_config_total_price_in_cart' ] );
+
+		// WooCommerce cart item extra data and price
+		add_filter( 'woocommerce_get_item_data', [ &$this, 'list_assembly_config_list_to_cart_item' ], 20, 2 );
+		add_filter( 'woocommerce_cart_item_price', [ &$this, 'assembly_configuration_cart_item_price' ], 20, 3 );
+
+		// WooCommerce order items add meta
+		add_action( 'woocommerce_add_order_item_meta', [
+			&$this,
+			'assembly_configuration_add_order_item_meta',
+		], 10, 2 );
+
+		// WooCommerce formatted order order metas
+		add_filter( 'woocommerce_order_items_meta_get_formatted', [
+			&$this,
+			'assembly_configuration_order_item_meta',
+		], 10, 2 );
+	}
+
+	/**
+	 * Append assembly configuration order item meta
+	 *
+	 * @param array              $formatted_meta
+	 * @param WC_Order_Item_Meta $order_item_meta
+	 *
+	 * @return array
+	 */
+	public function assembly_configuration_order_item_meta( $formatted_meta, $order_item_meta )
+	{
+		$assembly_config = isset( $order_item_meta->meta['wc_cp_assembly_config'] ) ? $order_item_meta->meta['wc_cp_assembly_config'] : null;
+		if ( empty( $assembly_config ) )
+		{
+			// skip unrated item;
+			return $formatted_meta;
+		}
+
+		// parse raw meta value
+		$assembly_config = maybe_unserialize( array_shift( $assembly_config ) );
+
+		// parts list holder
+		$assembly_parts = [ ];
+
+		foreach ( $assembly_config['parts'] as $part_item )
+		{
+			$_product = wc_get_product( isset( $part_item['variation_id'] ) ? $part_item['variation_id'] : $part_item['product_id'] );
+			if ( false === $_product )
+			{
+				// skip missing part linked product
+				continue;
+			}
+
+			$assembly_parts[] = sprintf( '%s x <strong>%s</strong>', $_product->get_formatted_name(), $part_item['quantity'] );
+		}
+
+		// append parts list
+		$formatted_meta[] = [
+			'key'   => 'wc_cp_assembly_config',
+			'label' => __( 'Assembly Configuration', WC_CP_DOMAIN ),
+			'value' => '<ul class="assembly-configration"><li>' . implode( '</li><li>', $assembly_parts ) . '</li></ul>',
+		];
+
+		return $formatted_meta;
+	}
+
+	/**
+	 * Add assembly configuration data to the order
+	 *
+	 * @param int   $item_id
+	 * @param array $values
+	 *
+	 * @return void
+	 */
+	public function assembly_configuration_add_order_item_meta( $item_id, $values )
+	{
+		if ( !isset( $values['wc_cp_assembly_config'] ) || !isset( $values['wc_cp_assembly_config']['parts'] ) )
+		{
+			// return price unmodified as the item is not in an assembly
+			return;
+		}
+
+		wc_add_order_item_meta( $item_id, 'wc_cp_assembly_config', $values['wc_cp_assembly_config'], true );
+	}
+
+	/**
+	 * Override main product subtotal price with the assembly total price
+	 *
+	 * @param string $subtotal_price
+	 * @param array  $cart_item
+	 * @param string $cart_item_key
+	 *
+	 * @return string
+	 */
+	public function assembly_configuration_cart_item_subtotal( $subtotal_price, $cart_item, $cart_item_key )
+	{
+		if ( !isset( $cart_item['wc_cp_assembly_config'] ) || !isset( $cart_item['wc_cp_assembly_config']['parts'] ) )
+		{
+			// return price unmodified as the item is not in an assembly
+			return $subtotal_price;
+		}
+
+		return wc_price( $cart_item['line_subtotal'] + wc_cp_products()->calculate_assembly_configuration_parts_total( $cart_item['wc_cp_assembly_config'], $cart_item['quantity'] ) );
+	}
+
+	/**
+	 * Override main product price with the assembly total price
+	 *
+	 * @param string $price
+	 * @param array  $cart_item
+	 * @param string $cart_item_key
+	 *
+	 * @return string
+	 */
+	public function assembly_configuration_cart_item_price( $price, $cart_item, $cart_item_key )
+	{
+		if ( !isset( $cart_item['wc_cp_assembly_config'] ) || !isset( $cart_item['wc_cp_assembly_config']['parts'] ) )
+		{
+			// return data unmodified as the item is not in an assembly
+			return $price;
+		}
+
+		return wc_price( $cart_item['data']->get_price() );
+	}
+
+	/**
+	 * List assembly configuration items inline to the part item
+	 *
+	 * @param array $item_data
+	 * @param array $cart_item
+	 *
+	 * @return array
+	 */
+	public function list_assembly_config_list_to_cart_item( $item_data, $cart_item )
+	{
+		if ( !isset( $cart_item['wc_cp_assembly_config'] ) || !isset( $cart_item['wc_cp_assembly_config']['parts'] ) )
+		{
+			// return data unmodified as the item is not in an assembly
+			return $item_data;
+		}
+
+		// parts list holder
+		$assembly_parts = [ ];
+
+		foreach ( $cart_item['wc_cp_assembly_config']['parts'] as $part_item )
+		{
+			$_product = wc_get_product( isset( $part_item['variation_id'] ) ? $part_item['variation_id'] : $part_item['product_id'] );
+			if ( false === $_product )
+			{
+				// skip missing part linked product
+				continue;
+			}
+
+			$assembly_parts[] = sprintf( '%s x <strong>%s</strong>', $_product->get_formatted_name(), $part_item['quantity'] );
+		}
+
+		// append parts list
+		$item_data[] = [
+			'key'   => __( 'Assembly Configuration', WC_CP_DOMAIN ),
+			'value' => '<ul class="assembly-configration"><li>' . implode( '</li><li>', $assembly_parts ) . '</li></ul>',
+		];
+
+		return $item_data;
+	}
+
+	/**
+	 * Override/set cart item of assembly configuration price
+	 *
+	 * @param array $cart_item
+	 *
+	 * @return array
+	 */
+	public function set_assembly_config_price_in_cart( $cart_item )
+	{
+		if ( !isset( $cart_item['wc_cp_assembly_config'] ) || !isset( $cart_item['wc_cp_assembly_config']['parts'] ) )
+		{
+			// return data unmodified as the item is not in an assembly
+			return $cart_item;
+		}
+
+		// new price
+		$new_price = (float) $cart_item['data']->get_price() + wc_cp_products()->calculate_assembly_configuration_parts_total( $cart_item['wc_cp_assembly_config'] );
+
+		/**
+		 * Filter assembly configuration price
+		 *
+		 * @param float $new_price
+		 * @param array $cart_item
+		 *
+		 * @return float
+		 */
+		$new_price = (float) apply_filters( 'wc_cp_assembly_configuration_cart_price', $new_price, $cart_item );
+
+		// save the new price
+		$cart_item['data']->set_price( $new_price );
+
+		return $cart_item;
+	}
+
+	/**
+	 * Override/set cart of assembly configuration total price
+	 *
+	 * @param WC_Cart $cart
+	 *
+	 * @return array
+	 */
+	public function set_assembly_config_total_price_in_cart( $cart )
+	{
+		if ( $cart->is_empty() )
+		{
+			// skip as cart is empty
+			return;
+		}
+
+		foreach ( $cart->cart_contents as $item_key => &$cart_item )
+		{
+			$cart_item = $this->set_assembly_config_price_in_cart( $cart_item );
+		}
 	}
 
 	/**
@@ -69,9 +292,19 @@ class Frontend extends Component
 	 */
 	public function add_assembly_config_to_cart_item( $cart_item_data, $product_id, $variation_id )
 	{
-		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'wc_cp_assembly_config_key', FILTER_SANITIZE_STRING ) );
-		dump( $product_id, $variation_id, wc_cp_products()->get_assembly_configuration( $assembly_key ), $cart_item_data );
-		die();
+		$assembly_key    = sanitize_key( filter_input( INPUT_POST, 'wc_cp_assembly_config_key', FILTER_SANITIZE_STRING ) );
+		$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		if ( false === $assembly_config )
+		{
+			// return unmodified data
+			return $cart_item_data;
+		}
+
+		if ( $product_id === $assembly_config['product_id'] || $variation_id === $assembly_config['product_id'] )
+		{
+			// append configuration to product cart item
+			$cart_item_data['wc_cp_assembly_config'] = $assembly_config;
+		}
 
 		return $cart_item_data;
 	}
@@ -202,6 +435,7 @@ class Frontend extends Component
 	{
 		if ( !in_array( $this->assembly_notice_type, $notice_types ) )
 		{
+			// append the new notice type
 			$notice_types[] = $this->assembly_notice_type;
 		}
 
