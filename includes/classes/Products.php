@@ -746,4 +746,40 @@ class Products extends Component
 		// return the updated one
 		return $assembly_config;
 	}
+
+	/**
+	 * Calculate the assembly configuration parts total price
+	 *
+	 * @param array|string $assembly_config
+	 * @param int          $quantity
+	 *
+	 * @return float
+	 */
+	public function calculate_assembly_configuration_parts_total( $assembly_config, $quantity = 1 )
+	{
+		if ( is_string( $assembly_config ) )
+		{
+			// get assembly info
+			$assembly_config = $this->get_assembly_configuration( $assembly_config );
+		}
+
+		// vars
+		$price_callback = WC()->cart->tax_display_cart === 'excl' ? 'get_price_excluding_tax' : 'get_price_including_tax';
+		$price          = 0;
+
+		foreach ( $assembly_config['parts'] as $part_item )
+		{
+			$_product = wc_get_product( isset( $part_item['variation_id'] ) ? $part_item['variation_id'] : $part_item['product_id'] );
+			if ( false === $_product )
+			{
+				// skip missing part linked product
+				continue;
+			}
+
+			// add part price
+			$price += call_user_func( [ &$_product, $price_callback ], $part_item['quantity'] * $quantity );
+		}
+
+		return $price;
+	}
 }

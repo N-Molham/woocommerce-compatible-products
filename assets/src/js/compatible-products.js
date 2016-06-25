@@ -10,7 +10,8 @@
 		}
 
 		// vars
-		var product_data        = $variations_form.data(),
+		var $window             = $( win ),
+		    product_data        = $variations_form.data(),
 		    $variation_id       = $variations_form.find( 'input[name=variation_id]' ),
 		    $instructions_btn   = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
 		    $price_calculator   = $( '#price_calculator' ),
@@ -96,11 +97,13 @@
 					assembly_key: current_config.key,
 					security    : wc_compatible_products_params.assembly_quantity_nonce
 				}, function ( response ) {
-					if ( response.success ) {
-						// trigger assembly configuration update
-						$variations_form.trigger( 'wc-cp-update-assembly-config' );
-					} else {
-						alert( response.data );
+					if ( 'success' in response ) {
+						if ( response.success ) {
+							// trigger assembly configuration update
+							$variations_form.trigger( 'wc-cp-update-assembly-config' );
+						} else {
+							alert( response.data );
+						}
 					}
 				}, 'json' );
 			}
@@ -137,21 +140,21 @@
 			// set the new compatible products list
 			compatible_products = $variations_form.find( '.wc-cp-products-list' ).data( 'products' );
 
+			// force reload to initialize quantity input
+			$window.trigger( 'vc_reload' );
+
 			// set the current assembly configuration
 			current_config = $variations_form.find( '.wc-cp-assembly-config' ).data( 'config' );
+			if ( current_config ) {
+				// set amount new value
+				$calculated_amount.val( current_config.quantity );
 
-			// set amount new value
-			$calculated_amount.val( current_config.quantity );
+				// calculator update
+				$variations_form.trigger( 'wc-measurement-price-calculator-update' );
 
-			/*if ( win.history && win.history.replaceState ) {
-			 // change the URL with the assembly key
-			 var search_replace = location.search;
-			 if ( search_replace.indexOf( 'wc_cp_assembly_key' ) == -1 ) {
-			 search_replace += search_replace.indexOf( '?' ) == -1 ? '?' : '&';
-			 search_replace += 'wc_cp_assembly_key=' + current_config.key;
-			 history.replaceState( null, null, search_replace );
-			 }
-			 }*/
+				// Update current assembly
+				// update_query_string_param( 'wc_cp_assembly_key', current_config.key );
+			}
 
 			// trigger assembly configuration update
 			$variations_form.trigger( 'wc-cp-update-assembly-config' );
@@ -282,6 +285,25 @@
 			return part_item;
 		}
 	} );
+
+	function update_query_string_param( key, value ) {
+		baseUrl        = [ location.protocol, '//', location.host, location.pathname ].join( '' );
+		urlQueryString = document.location.search;
+		var newParam   = key + '=' + value,
+		    params     = '?' + newParam;
+
+		// If the "search" string exists, then build params from it
+		if ( urlQueryString ) {
+			keyRegex = new RegExp( '([\?&])' + key + '[^&]*' );
+			// If param exists already, update it
+			if ( urlQueryString.match( keyRegex ) !== null ) {
+				params = urlQueryString.replace( keyRegex, "$1" + newParam );
+			} else { // Otherwise, add it to end of query string
+				params = urlQueryString + '&' + newParam;
+			}
+		}
+		window.history.replaceState( null, null, baseUrl + params );
+	}
 
 	function wc_format_price( price ) {
 		var formatted_price = '',

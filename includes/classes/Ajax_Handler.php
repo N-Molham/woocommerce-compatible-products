@@ -18,6 +18,7 @@ class Ajax_Handler extends Component
 		'add_compatible_product_to_cart'          => 'both',
 		'add_compatible_product_to_assembly'      => 'both',
 		'remove_compatible_product_from_assembly' => 'both',
+		'update_assembly_amount'                  => 'both',
 	];
 
 	/**
