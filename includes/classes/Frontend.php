@@ -303,7 +303,7 @@ class Frontend extends Component
 		if ( $product_id === $assembly_config['product_id'] || $variation_id === $assembly_config['product_id'] )
 		{
 			// append configuration to product cart item
-			$cart_item_data['wc_cp_assembly_config'] = $assembly_config;
+			$cart_item_data['wc_cp_assembly_config'] = wc_cp_products()->clone_assembly_configuration( $assembly_config );
 		}
 
 		return $cart_item_data;

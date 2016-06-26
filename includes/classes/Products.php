@@ -581,7 +581,7 @@ class Products extends Component
 		if ( '' === $assembly_key )
 		{
 			// generate new one
-			$assembly_key = md5( uniqid() );
+			$assembly_key = $this->generate_assembly_key();
 		}
 
 		$new_config = [
@@ -592,6 +592,16 @@ class Products extends Component
 		$this->save_assembly_configuration( $assembly_key, $new_config );
 
 		return array_merge( [ 'key' => $assembly_key ], $new_config );
+	}
+
+	/**
+	 * Generate assembly configuration key
+	 *
+	 * @return string
+	 */
+	public function generate_assembly_key()
+	{
+		return md5( uniqid() );
 	}
 
 	/**
@@ -629,6 +639,22 @@ class Products extends Component
 		$this->assembly_configurations[ $assembly_key ] = $assembly_config;
 
 		$_SESSION[ $this->assembly_configs_session_key ] = $this->assembly_configurations;
+	}
+
+	/**
+	 * Clone given assembly configuration
+	 *
+	 * @param array $assembly_config
+	 *
+	 * @return array the clone config with new key
+	 */
+	public function clone_assembly_configuration( $assembly_config )
+	{
+		$assembly_config['key'] = $this->generate_assembly_key();
+
+		$this->save_assembly_configuration( $assembly_config['key'], $assembly_config );
+
+		return $assembly_config;
 	}
 
 	/**
