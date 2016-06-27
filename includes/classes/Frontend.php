@@ -214,13 +214,32 @@ class Frontend extends Component
 				continue;
 			}
 
-			$assembly_parts[] = sprintf( '%s x <strong>%s</strong>', $_product->get_formatted_name(), $part_item['quantity'] );
+			$assembly_parts[] = sprintf( '<li class="assembly-item">%s x <strong>%s</strong></li>', $_product->get_formatted_name(), $part_item['quantity'] );
 		}
+
+		// assembly edit URL based on main product link
+		$edit_url = add_query_arg( [
+			'wc_cp_edit_assembly' => 'yes',
+			'wc_cp_assembly_key'  => $cart_item['wc_cp_assembly_config']['key'],
+		], $cart_item['data']->get_permalink() );
+
+		/**
+		 * Filter assembly configuration edit link URL
+		 *
+		 * @param string $edit_url
+		 * @param array  $cart_item
+		 *
+		 * @return string
+		 */
+		$edit_url = apply_filters( 'wc_cp_edit_assembly_link_url', $edit_url, $cart_item );
+
+		// assembly edit link
+		$assembly_parts[] = '<li class="assembly-edit-link"><a href="' . esc_url( $edit_url ) . '">' . __( 'Edit Assembly', WC_CP_DOMAIN ) . '</a></li>';
 
 		// append parts list
 		$item_data[] = [
 			'key'   => __( 'Assembly Configuration', WC_CP_DOMAIN ),
-			'value' => '<ul class="assembly-configration"><li>' . implode( '</li><li>', $assembly_parts ) . '</li></ul>',
+			'value' => '<ul class="assembly-configuration">' . implode( '', $assembly_parts ) . '</ul>',
 		];
 
 		return $item_data;
@@ -511,6 +530,8 @@ class Frontend extends Component
 		// load main JS file
 		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . Helpers::enqueue_base_dir() . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
 		wp_localize_script( 'wc-cp-compatible-products', 'wc_compatible_products_params', [
+			'edit_assembly_label'            => __( 'Update Assembly', WC_CP_DOMAIN ),
+			'assembly_update_nonce'          => wp_create_nonce( 'wc_cp_cart_update_assembly' ),
 			'assembly_remove_nonce'          => wp_create_nonce( 'wc_cp_remove_assembly_item' ),
 			'assembly_quantity_nonce'        => wp_create_nonce( 'wc_cp_update_assembly_main_product_quantity' ),
 			'woocommerce_currency_symbol'    => get_woocommerce_currency_symbol(),

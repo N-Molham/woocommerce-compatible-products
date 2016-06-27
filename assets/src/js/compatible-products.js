@@ -10,15 +10,17 @@
 		}
 
 		// vars
-		var $window             = $( win ),
-		    product_data        = $variations_form.data(),
-		    $variation_id       = $variations_form.find( 'input[name=variation_id]' ),
-		    $instructions_btn   = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
-		    $price_calculator   = $( '#price_calculator' ),
-		    $calculated_amount  = $price_calculator.find( '#length_needed' ),
-		    init_need_fittings  = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1,
-		    current_config      = null,
-		    compatible_products = null;
+		var $window               = $( win ),
+		    product_data          = $variations_form.data(),
+		    $variation_id         = $variations_form.find( 'input[name=variation_id]' ),
+		    $variation_attributes = $variations_form.find( '.variations' ),
+		    $instructions_btn     = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
+		    $price_calculator     = $( '#price_calculator' ),
+		    $calculated_amount    = $price_calculator.find( '#length_needed' ),
+		    init_need_fittings    = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1,
+		    edit_assembly_mod     = location.search.indexOf( 'wc_cp_edit_assembly=yes' ) > -1,
+		    current_config        = null,
+		    compatible_products   = null;
 
 		// Update assembly configuration
 		$variations_form.on( 'wc-cp-update-assembly-config', function () {
@@ -125,15 +127,6 @@
 
 		// when variation changes
 		$variations_form.on( 'woocommerce_variation_has_changed', function () {
-			// show compatible products by default
-			if ( init_need_fittings ) {
-				$variations_form.find( '.wc-cp-need-compatible' ).prop( 'checked', true );
-				init_need_fittings = false;
-			}
-
-			// trigger compatible checkbox checked change
-			$variations_form.find( '.wc-cp-need-compatible' ).trigger( 'wc-cp-change' );
-
 			// initialize popovers
 			$variations_form.find( '.compatible-product-link' ).popover();
 
@@ -152,12 +145,39 @@
 				// calculator update
 				$variations_form.trigger( 'wc-measurement-price-calculator-update' );
 
+				if ( current_config.parts && current_config.parts.length ) {
+					init_need_fittings = true;
+				}
+
 				// Update current assembly
 				// update_query_string_param( 'wc_cp_assembly_key', current_config.key );
 			}
 
+			// show compatible products by default
+			if ( init_need_fittings ) {
+				$variations_form.find( '.wc-cp-need-compatible' ).prop( 'checked', true );
+				init_need_fittings = false;
+			}
+
+			// trigger compatible checkbox checked change
+			$variations_form.find( '.wc-cp-need-compatible' ).trigger( 'wc-cp-change' );
+
 			// trigger assembly configuration update
 			$variations_form.trigger( 'wc-cp-update-assembly-config' );
+
+			// assembly mode on
+			if ( edit_assembly_mod ) {
+				// disable any validations changes for now
+				$variation_attributes.addClass( 'hidden' );
+				/*$variation_attributes.find( 'select' ).prop( 'disabled', true ).addClass( 'disabled' );
+				 $variation_attributes.find( '.reset_variations' ).remove();*/
+
+				$variations_form
+				// change add to cart button functionality
+					.find( ':input:submit' ).addClass( 'update-assembly' ).text( wc_compatible_products_params.edit_assembly_label )
+				// append update mark
+					.parent().append( '<input type="hidden" name="wc_cp_update_assembly" value="'+ current_config.key +'" />' );
+			}
 		} );
 
 		// add product to cart click
@@ -203,6 +223,38 @@
 					console.log( response );
 				}
 			}, 'json' );
+		} );
+
+		// when the submit happens on target assembly to update
+		$variations_form.on( 'click', '.update-assembly', function ( e ) {
+			e.preventDefault();
+
+			var $this        = $( this ).prop( 'disabled', true ),
+			    request_data = {
+				    action      : 'update_cart_assembly',
+				    security    : wc_compatible_products_params.assembly_update_nonce,
+				    assembly_key: current_config.key,
+				    pid         : $variations_form.find( 'input[name=product_id]' ).val(),
+				    vid         : $variations_form.find( 'input[name=variation_id]' ).val()
+			    };
+
+			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
+				if ( typeof response === 'object' ) {
+					// json response
+					if ( response.success ) {
+						// navigate to Cart page
+						location.href = wc_add_to_cart_params.cart_url;
+					} else {
+						// error
+						alert( response.data );
+					}
+				} else {
+					// unknown response format
+					console.log( response );
+				}
+			}, 'json' ).always( function () {
+				$this.prop( 'disabled', false );
+			} );
 		} );
 
 		/**
