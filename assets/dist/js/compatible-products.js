@@ -31,7 +31,7 @@ for(var g=0,i=n.length;i>g;g++){var o=n[g];"variation_id"in a&&"variation_id"in 
 // setup item data
 c.qty=a.quantity,c.price=d(o.price*a.quantity),c.name=o.text)}return c}var e=a(".variations_form");if(!(e.length<1)){
 // vars
-var f=a(b),g=e.data(),h=e.find("input[name=variation_id]"),i=a("#measuring-instructions-button").removeClass("hidden"),j=a("#price_calculator"),k=j.find("#length_needed"),l=location.search.indexOf("wc-cp-need-fittings=yes")>-1,m=null,n=null;
+var f=a(b),g=e.data(),h=e.find("input[name=variation_id]"),i=a("#measuring-instructions-button").removeClass("hidden"),j=a("#price_calculator"),k=j.find("#length_needed"),l=location.search.indexOf("wc-cp-need-fittings=yes")>-1,m=(location.search.indexOf("wc_cp_edit_assembly=yes")>-1,null),n=null;
 // Update assembly configuration
 e.on("wc-cp-update-assembly-config",function(){
 // items holder
@@ -59,12 +59,8 @@ a('<tr><td colspan="2"></td></tr>').insertAfter(k.closest("tr")).find("td").appe
 e.on("change wc-cp-change",".wc-cp-need-compatible",function(a){var b=e.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||l?b.removeClass("hidden"):b.addClass("hidden")}).trigger("wc-cp-change"),
 // when variation changes
 e.on("woocommerce_variation_has_changed",function(){
-// show compatible products by default
-l&&(e.find(".wc-cp-need-compatible").prop("checked",!0),l=!1),
-// trigger compatible checkbox checked change
-e.find(".wc-cp-need-compatible").trigger("wc-cp-change"),
 // initialize popovers
-e.find(".compatible-product-link").popover(),n=e.find(".wc-cp-products-list").data("products"),f.trigger("vc_reload"),m=e.find(".wc-cp-assembly-config").data("config"),m&&(k.val(m.quantity),e.trigger("wc-measurement-price-calculator-update")),e.trigger("wc-cp-update-assembly-config")}),
+e.find(".compatible-product-link").popover(),n=e.find(".wc-cp-products-list").data("products"),f.trigger("vc_reload"),m=e.find(".wc-cp-assembly-config").data("config"),m&&(k.val(m.quantity),e.trigger("wc-measurement-price-calculator-update"),m.parts&&m.parts.length&&(l=!0)),l&&(e.find(".wc-cp-need-compatible").prop("checked",!0),l=!1),e.find(".wc-cp-need-compatible").trigger("wc-cp-change"),e.trigger("wc-cp-update-assembly-config")}),
 // add product to cart click
 e.on("click",".compatible-product-add-to-cart-link",function(b){b.preventDefault();
 // start loading

@@ -19,6 +19,7 @@ class Ajax_Handler extends Component
 		'add_compatible_product_to_assembly'      => 'both',
 		'remove_compatible_product_from_assembly' => 'both',
 		'update_assembly_amount'                  => 'both',
+		// 'update_cart_assembly'                    => 'both',
 	];
 
 	/**
@@ -61,6 +62,62 @@ class Ajax_Handler extends Component
 				}
 			}
 		}
+	}
+
+	/**
+	 * Update assembly in the cart
+	 *
+	 * @return void
+	 */
+	public function update_cart_assembly()
+	{
+		// security check
+		check_ajax_referer( 'wc_cp_cart_update_assembly', 'security' );
+
+		// request args
+		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'assembly_key', FILTER_SANITIZE_STRING ) );
+		$product_id   = absint( filter_input( INPUT_POST, 'pid', FILTER_SANITIZE_NUMBER_INT ) );
+		$variation_id = absint( filter_input( INPUT_POST, 'vid', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// assembly configuration
+		$assembly_config = wc_cp_products()->get_assembly_configuration( $assembly_key );
+		if ( false === $assembly_config || $assembly_config['product_id'] !== $variation_id || WC()->cart->is_empty() )
+		{
+			// invalid config
+			$this->error( __( 'Invalid target assembly configuration!', WC_CP_DOMAIN ) );
+		}
+
+		$cart = WC()->cart->get_cart();
+		foreach ( $cart as $cart_item_key => $cart_item )
+		{
+			if ( !isset( $cart_item['wc_cp_assembly_config'] ) || !isset( $cart_item['wc_cp_assembly_config']['parts'] ) )
+			{
+				// skip as the item is not in an assembly
+				continue;
+			}
+
+			if ( $assembly_key !== $cart_item['wc_cp_assembly_config']['key'] || $variation_id !== $cart_item['wc_cp_assembly_config']['product_id'] )
+			{
+				// skip as it's not the target assembly wanted
+				continue;
+			}
+
+			//$this->debug( $cart_item );
+
+			// replace old assembly with the new one
+			$cart_item['wc_cp_assembly_config']                         = $assembly_config;
+			$cart_item['pricing_item_meta_data']['_measurement_needed'] = $assembly_config['quantity'];
+			$cart_item['pricing_item_meta_data']['length']              = (string) $assembly_config['quantity'];
+
+			$_REQUEST['length_needed'] = $assembly_config['quantity'];
+			$this->debug( apply_filters( 'woocommerce_add_cart_item_data', [ ], $product_id, $variation_id ) );
+
+			WC()->cart->cart_contents[ $cart_item_key ] = apply_filters( 'woocommerce_add_cart_item_data', [ ], $product_id, $variation_id );
+			WC()->cart->cart_contents[ $cart_item_key ] = apply_filters( 'woocommerce_add_cart_item', $cart_item, $cart_item_key );
+			WC()->cart->calculate_totals();
+		}
+
+		$this->success( 'updated' );
 	}
 
 	/**
