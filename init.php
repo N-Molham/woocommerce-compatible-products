@@ -3,7 +3,7 @@
 /**
  * Plugin Name: WooCommerce Compatible Products and Measurements
  * Description: Integrates WooCommerce Measurement Price Calculator plugin with compatible products
- * Version: 1.4.0
+ * Version: 1.4.5
  * Author: Nabeel Molham
  * Author URI: http://nabeel.molham.me/
  * Text Domain: wc-compatible-products
@@ -101,6 +101,12 @@ class Plugin extends Singular
 	{
 		// load language files
 		add_action( 'plugins_loaded', [ &$this, 'load_language' ] );
+
+		if ( !function_exists( 'get_plugin_data' ) )
+		{
+			// include the function file
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
 
 		// plugin data
 		$this->plugin_data = get_plugin_data( WC_CP_MAIN_FILE );

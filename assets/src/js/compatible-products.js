@@ -225,38 +225,6 @@
 			}, 'json' );
 		} );
 
-		// when the submit happens on target assembly to update
-		$variations_form.on( 'click', '.update-assembly', function ( e ) {
-			e.preventDefault();
-
-			var $this        = $( this ).prop( 'disabled', true ),
-			    request_data = {
-				    action      : 'update_cart_assembly',
-				    security    : wc_compatible_products_params.assembly_update_nonce,
-				    assembly_key: current_config.key,
-				    pid         : $variations_form.find( 'input[name=product_id]' ).val(),
-				    vid         : $variations_form.find( 'input[name=variation_id]' ).val()
-			    };
-
-			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
-				if ( typeof response === 'object' ) {
-					// json response
-					if ( response.success ) {
-						// navigate to Cart page
-						location.href = wc_add_to_cart_params.cart_url;
-					} else {
-						// error
-						alert( response.data );
-					}
-				} else {
-					// unknown response format
-					console.log( response );
-				}
-			}, 'json' ).always( function () {
-				$this.prop( 'disabled', false );
-			} );
-		} );
-
 		/**
 		 * Setup assembly configuration table item object
 		 *
