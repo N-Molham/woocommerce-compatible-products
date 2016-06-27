@@ -58,6 +58,7 @@ class Frontend extends Component
 		add_filter( 'woocommerce_available_variation', [ &$this, 'append_compatible_products_to_variation_data' ] );
 
 		// WooCommerce product item extra data to save to add to the cart
+		add_filter( 'woocommerce_add_cart_item_data', [ &$this, 'remove_updated_cart_item' ], 5, 3 );
 		add_filter( 'woocommerce_add_cart_item_data', [ &$this, 'add_assembly_config_to_cart_item' ], 10, 3 );
 
 		// WooCommerce product item data to be saved in the cart
@@ -323,6 +324,40 @@ class Frontend extends Component
 		{
 			// append configuration to product cart item
 			$cart_item_data['wc_cp_assembly_config'] = wc_cp_products()->clone_assembly_configuration( $assembly_config );
+		}
+
+		return $cart_item_data;
+	}
+
+	/**
+	 * Remove assembly configuration cart item which will be updated
+	 *
+	 * @param array $cart_item_data
+	 * @param int   $product_id
+	 * @param int   $variation_id
+	 *
+	 * @return array
+	 */
+	public function remove_updated_cart_item( $cart_item_data, $product_id, $variation_id )
+	{
+		$assembly_key = sanitize_key( (string) filter_input( INPUT_POST, 'wc_cp_update_assembly', FILTER_SANITIZE_STRING ) );
+		if ( empty( $assembly_key ) || WC()->cart->is_empty() )
+		{
+			// skip item with no configuration or cart doesn't have any other items
+			return $cart_item_data;
+		}
+
+		$cart = WC()->cart->get_cart();
+		foreach ( $cart as $cart_item_key => $cart_item )
+		{
+			if ( !isset( $cart_item['wc_cp_assembly_config'] ) && $assembly_key !== $cart_item['wc_cp_assembly_config']['key'] )
+			{
+				// skip non-configuration item or miss-matched
+				continue;
+			}
+
+			// remove old item so it will be replaced with other
+			WC()->cart->remove_cart_item( $cart_item_key );
 		}
 
 		return $cart_item_data;
