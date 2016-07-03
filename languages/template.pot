@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License, version 3, http://www.gnu.org/licenses/gpl-3.0.en.html.
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce Compatible Products and Measurements 1.4.5\n"
+"Project-Id-Version: WooCommerce Compatible Products and Measurements 1.5.5\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/init\n"
-"POT-Creation-Date: 2016-06-27 17:31:31+00:00\n"
+"POT-Creation-Date: 2016-07-03 15:42:08+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -41,31 +41,34 @@ msgstr ""
 msgid "Stock os not enough!"
 msgstr ""
 
-#: includes/classes/Backend.php:58
+#: includes/classes/Backend.php:146 includes/classes/Backend.php:199
+#: views/admin/product_data/assembly_percentage_field.php:11
+msgid "Assembly Price Percentage (%)"
+msgstr ""
+
+#: includes/classes/Backend.php:151
+msgid ""
+"Percentage used as default for the product pricing as general and as the "
+"default it's variations."
+msgstr ""
+
+#: includes/classes/Backend.php:171
 msgid "Compatible Products Options"
 msgstr ""
 
-#: includes/classes/Backend.php:65
+#: includes/classes/Backend.php:178
 msgid "Categories Filter"
 msgstr ""
 
-#: includes/classes/Backend.php:66
+#: includes/classes/Backend.php:179
 msgid "This controls which category(ies) the compatible products search in."
 msgstr ""
 
-#: includes/classes/Backend.php:77 views/frontend/instructions_modal.php:19
+#: includes/classes/Backend.php:190 views/frontend/instructions_modal.php:19
 msgid "Measuring Instructions"
 msgstr ""
 
-#: includes/classes/Backend.php:86
-msgid "Assembly Fees Notice"
-msgstr ""
-
-#: includes/classes/Backend.php:92
-msgid "Do you need assembly? Fees: "
-msgstr ""
-
-#: includes/classes/Backend.php:165
+#: includes/classes/Backend.php:282
 msgid "Search for a product/variation"
 msgstr ""
 
