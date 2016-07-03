@@ -19,6 +19,13 @@ class Backend extends Component
 	protected $compatible_meta_key = '';
 
 	/**
+	 * Default assembly price percentage to use
+	 *
+	 * @var float
+	 */
+	public $default_assembly_percentage = 30;
+
+	/**
 	 * Constructor
 	 *
 	 * @return void
@@ -29,20 +36,126 @@ class Backend extends Component
 
 		$this->compatible_meta_key = wc_compatible_products()->products->get_compatible_products_key();
 
+		// Product meta data processing for save
+		add_action( 'woocommerce_process_product_meta', [ &$this, 'save_product_assembly_percentage' ] );
+
+		// Product information general information tab fields
+		add_action( 'woocommerce_product_options_general_product_data', [
+			&$this,
+			'product_general_assembly_percentage_field',
+		] );
+
 		// Product variation extra attributes action
 		add_action( 'woocommerce_product_after_variable_attributes', [
 			&$this,
-			'product_variation_compatible_products_field',
+			'product_variation_assembly_percentage_field',
 		], 10, 3 );
+		add_action( 'woocommerce_product_after_variable_attributes', [
+			&$this,
+			'product_variation_compatible_products_field',
+		], 12, 3 );
 
 		// Save product variation data
 		add_action( 'woocommerce_save_product_variation', [ &$this, 'save_product_variation_compatible_data' ] );
+		add_action( 'woocommerce_save_product_variation', [
+			&$this,
+			'save_product_variation_assembly_percentage_data',
+		] );
 
 		// dashboard scripts
 		add_action( 'admin_enqueue_scripts', [ &$this, 'enqueue_scripts' ] );
 
 		// WooCommerce general settings filter
 		add_filter( 'woocommerce_products_general_settings', [ &$this, 'add_search_categories_filter' ] );
+	}
+
+	/**
+	 * Save the selected meta boxes
+	 *
+	 * @param int $variation_id
+	 *
+	 * @return void
+	 */
+	public function save_product_variation_assembly_percentage_data( $variation_id )
+	{
+		$percentages = filter_input( INPUT_POST, 'wc_cp_variation_assembly_percentage', FILTER_VALIDATE_FLOAT, FILTER_REQUIRE_ARRAY );
+		if ( empty( $percentages ) || !isset( $percentages[ $variation_id ] ) )
+		{
+			// skip
+			return;
+		}
+
+		update_post_meta( $variation_id, '_wc_cp_assembly_percentage', abs( $percentages[ $variation_id ] ) );
+	}
+
+	/**
+	 * Add product variation assembly percentage field
+	 *
+	 * @param int     $variation_index
+	 * @param array   $variation_data
+	 * @param WP_Post $variation
+	 *
+	 * @return void
+	 */
+	public function product_variation_assembly_percentage_field( $variation_index, $variation_data, $variation )
+	{
+		// default and product percentages
+		$default_assembly_percentage   = wc_cp_products()->get_global_assembly_percentage();
+		$variation_assembly_percentage = wc_cp_products()->get_product_assembly_percentage( $variation );
+		if ( 0 == $variation_assembly_percentage )
+		{
+			// switch to empty string to display the placeholder
+			$variation_assembly_percentage = '';
+		}
+
+		wc_cp_view( 'admin/product_data/assembly_percentage_field', compact( 'default_assembly_percentage', 'variation_assembly_percentage', 'variation' ) );
+	}
+
+	/**
+	 * Save product's general assembly percentage
+	 *
+	 * @param int $product_id
+	 *
+	 * @return void
+	 */
+	public function save_product_assembly_percentage( $product_id )
+	{
+		update_post_meta( $product_id, '_wc_cp_assembly_percentage', abs( floatval( filter_input( INPUT_POST, 'wc_cp_assembly_percentage', FILTER_SANITIZE_NUMBER_FLOAT ) ) ) );
+	}
+
+	/**
+	 * Display product's general assembly percentage
+	 *
+	 * @return void
+	 */
+	public function product_general_assembly_percentage_field()
+	{
+		// current product
+		$product = wc_get_product();
+
+		// default and product percentages
+		$default_assembly_percentage = wc_cp_products()->get_global_assembly_percentage();
+		$product_assembly_percentage = wc_cp_products()->get_product_assembly_percentage( $product );
+		if ( 0 == $product_assembly_percentage )
+		{
+			// switch to empty string to display the placeholder
+			$product_assembly_percentage = '';
+		}
+
+		woocommerce_wp_text_input( [
+			'label'             => __( 'Assembly Price Percentage (%)', WC_CP_DOMAIN ),
+			'id'                => 'wc_cp_assembly_percentage',
+			'name'              => 'wc_cp_assembly_percentage',
+			'value'             => $product_assembly_percentage,
+			'placeholder'       => $default_assembly_percentage,
+			'description'       => __( 'Percentage used as default for the product pricing as general and as the default it\'s variations.', WC_CP_DOMAIN ),
+			'desc_tip'          => true,
+			'type'              => 'number',
+			'custom_attributes' => [
+				'step' => 0.5,
+				'min'  => 0,
+			],
+		] );
 	}
 
 	/**
@@ -83,13 +196,17 @@ class Backend extends Component
 		];
 
 		$settings[] = [
-			'title'   => __( 'Assembly Fees Notice', 'woocommerce' ),
-			'desc'    => '',
-			'id'      => 'wc_cp_assembly_notice',
-			'css'     => 'min-width:350px; min-height: 220px;',
-			'class'   => 'code',
-			'type'    => 'textarea',
-			'default' => __( 'Do you need assembly? Fees: ', 'woocommerce' ) . PHP_EOL,
+			'title'             => __( 'Assembly Price Percentage (%)', 'woocommerce' ),
+			'desc'              => '',
+			'id'                => 'wc_cp_assembly_percentage',
+			'css'               => 'width:65px;',
+			'class'             => 'code',
+			'type'              => 'number',
+			'custom_attributes' => [
+				'min'  => 0,
+				'step' => 0.5,
+			],
+			'default'           => $this->default_assembly_percentage,
 		];
 
 		$settings[] = [

@@ -3,6 +3,7 @@
 use WC_Cart;
 use WC_Product;
 use WC_Session;
+use WP_Post;
 
 /**
  * Products logic
@@ -807,5 +808,66 @@ class Products extends Component
 		}
 
 		return $price;
+	}
+
+	/**
+	 * Get product assembly pricing percentage
+	 *
+	 * @param int|WC_Product|WP_Post $product
+	 *
+	 * @return float
+	 */
+	public function get_product_assembly_percentage( $product )
+	{
+		if ( is_numeric( $product ) || is_a( $product, 'WP_Post' ) )
+		{
+			// query product if ID given
+			$product = wc_get_product( $product );
+			if ( false === $product )
+			{
+				// skip as product is invalid
+				return 0;
+			}
+		}
+
+		// use the global percentage by default
+		$default_percentage = $this->get_global_assembly_percentage();
+
+		// product percentage
+		$product_percentage = abs( floatval( $product->wc_cp_assembly_percentage ) );
+
+		if ( $this->is_product_variation( $product ) )
+		{
+			// variation product
+			$variation_percentage = abs( floatval( $product->get_parent()->wc_cp_assembly_percentage ) );
+			if ( !empty( $variation_percentage ) )
+			{
+				// use the variation instead
+				$product_percentage = $variation_percentage;
+			}
+		}
+
+		/**
+		 * Filter the final used assembly percentage
+		 *
+		 * @param float      $product_percentage
+		 * @param WC_Product $product
+		 *
+		 * @return float
+		 */
+		return apply_filters_ref_array( 'wc_cp_product_assembly_percentage', [
+			empty( $product_percentage ) ? $default_percentage : $product_percentage,
+			&$product,
+		] );
+	}
+
+	/**
+	 * Get the global assembly percentage
+	 *
+	 * @return float
+	 */
+	public function get_global_assembly_percentage()
+	{
+		return get_option( 'wc_cp_assembly_percentage', $this->plugin->backend->default_assembly_percentage );
 	}
 }
