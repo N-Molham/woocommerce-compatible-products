@@ -20,6 +20,13 @@ class Frontend extends Component
 	protected $assembly_notice_type = 'assembly';
 
 	/**
+	 * Whither current mode with assembly or not
+	 *
+	 * @var boolean
+	 */
+	protected $with_assembly;
+
+	/**
 	 * Constructor
 	 *
 	 * @return void
@@ -27,6 +34,9 @@ class Frontend extends Component
 	protected function init()
 	{
 		parent::init();
+
+		// vars
+		$this->with_assembly = isset( $_REQUEST['wc_cp_with_need_assembly'] ) && 'yes' === sanitize_key( $_REQUEST['wc_cp_with_need_assembly'] );
 
 		// WooCommerce cart fee output filter
 		add_filter( 'woocommerce_cart_totals_fee_html', [ &$this, 'add_assembly_fee_remove_button' ], 10, 2 );
@@ -41,10 +51,10 @@ class Frontend extends Component
 		// add_filter( 'woocommerce_notice_types', [ &$this, 'add_assembly_notice_type' ] );
 
 		// WooCommerce before order submit button
-		// add_action( 'woocommerce_review_order_before_submit', [ &$this, 'order_assembly_fees_confirm_checkbox' ] );
+		add_action( 'woocommerce_review_order_before_submit', [ &$this, 'order_assembly_fees_confirm_checkbox' ] );
 
 		// WooCommerce before checkout process
-		// add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
+		add_action( 'woocommerce_before_checkout_process', [ &$this, 'checkout_is_assembly_term_checked' ] );
 
 		// WooCommerce before product's add to cart button
 		add_action( 'woocommerce_before_add_to_cart_button', [
@@ -81,6 +91,38 @@ class Frontend extends Component
 			&$this,
 			'assembly_configuration_order_item_meta',
 		], 10, 2 );
+
+		if ( $this->with_assembly )
+		{
+			// WooCommerce product price
+			add_filter( 'woocommerce_get_price', [ &$this, 'get_product_price_with_assembly_percentage' ], 10, 2 );
+
+			// WooCommerce after product's add to cart button
+			add_action( 'woocommerce_after_add_to_cart_button', [ &$this, 'assembly_percentage_hidden_input_mark' ] );
+		}
+	}
+
+	/**
+	 * Add hidden input to assembly main product to use in cart
+	 *
+	 * @return void
+	 */
+	public function assembly_percentage_hidden_input_mark()
+	{
+		echo '<input type="hidden" name="wc_cp_with_need_assembly" value="yes" />';
+	}
+
+	/**
+	 * Calculate product price with assembly percentage added
+	 *
+	 * @param float      $price
+	 * @param WC_Product $product
+	 *
+	 * @return float
+	 */
+	public function get_product_price_with_assembly_percentage( $price, $product )
+	{
+		return wc_cp_products()->calculate_price_with_assembly( $product, $price );
 	}
 
 	/**
@@ -102,6 +144,7 @@ class Frontend extends Component
 
 		// parse raw meta value
 		$assembly_config = maybe_unserialize( array_shift( $assembly_config ) );
+		$with_assembly   = (boolean) $order_item_meta->meta['wc_cp_with_need_assembly'][0];
 
 		// parts list holder
 		$assembly_parts = [ ];
@@ -115,7 +158,27 @@ class Frontend extends Component
 				continue;
 			}
 
-			$assembly_parts[] = sprintf( '%s x <strong>%s</strong>', $_product->get_formatted_name(), $part_item['quantity'] );
+			// product base name
+			$product_name = $_product->get_sku() . ' &ndash; ' . $_product->get_title();
+			if ( wc_cp_products()->is_product_variation( $_product ) )
+			{
+				// variation attribute(s)
+				$product_name .= ' &ndash; ' . $_product->get_formatted_variation_attributes( true );
+			}
+
+			// product price
+			if ( $with_assembly )
+			{
+				// with assembly fees
+				$product_name .= ' &ndash; ' . wc_cp_products()->calculate_price_with_assembly( $_product );
+			}
+			else
+			{
+				// normal price
+				$product_name .= ' &ndash; ' . $_product->get_price();
+			}
+
+			$assembly_parts[] = sprintf( '%s x <strong>%s</strong>', $product_name, $part_item['quantity'] );
 		}
 
 		// append parts list
@@ -145,6 +208,7 @@ class Frontend extends Component
 		}
 
 		wc_add_order_item_meta( $item_id, 'wc_cp_assembly_config', $values['wc_cp_assembly_config'], true );
+		wc_add_order_item_meta( $item_id, 'wc_cp_with_need_assembly', $values['wc_cp_with_need_assembly'], true );
 	}
 
 	/**
@@ -203,6 +267,8 @@ class Frontend extends Component
 			return $item_data;
 		}
 
+		$with_assembly = false === empty( $cart_item['wc_cp_with_need_assembly'] );
+
 		// parts list holder
 		$assembly_parts = [ ];
 
@@ -215,14 +281,40 @@ class Frontend extends Component
 				continue;
 			}
 
-			$assembly_parts[] = sprintf( '<li class="assembly-item">%s x <strong>%s</strong></li>', $_product->get_formatted_name(), $part_item['quantity'] );
+			// product base name
+			$product_name = $_product->get_sku() . ' &ndash; ' . $_product->get_title();
+			if ( wc_cp_products()->is_product_variation( $_product ) )
+			{
+				// variation attribute(s)
+				$product_name .= ' &ndash; ' . $_product->get_formatted_variation_attributes( true );
+			}
+
+			// product price
+			if ( $with_assembly )
+			{
+				// with assembly fees
+				$product_name .= ' &ndash; ' . wc_cp_products()->calculate_price_with_assembly( $_product );
+			}
+			else
+			{
+				// normal price
+				$product_name .= ' &ndash; ' . $_product->get_price();
+			}
+
+			$assembly_parts[] = sprintf( '<li class="assembly-item">%s x <strong>%s</strong></li>', $product_name, $part_item['quantity'] );
 		}
 
 		// assembly edit URL based on main product link
-		$edit_url = add_query_arg( [
+		$edit_args = [
 			'wc_cp_edit_assembly' => 'yes',
 			'wc_cp_assembly_key'  => $cart_item['wc_cp_assembly_config']['key'],
-		], $cart_item['data']->get_permalink() );
+		];
+
+		if ( $with_assembly )
+		{
+			// with assembly fees also
+			$edit_args['wc_cp_with_need_assembly'] = 'yes';
+		}
 
 		/**
 		 * Filter assembly configuration edit link URL
@@ -232,10 +324,10 @@ class Frontend extends Component
 		 *
 		 * @return string
 		 */
-		$edit_url = apply_filters( 'wc_cp_edit_assembly_link_url', $edit_url, $cart_item );
+		$edit_url = apply_filters( 'wc_cp_edit_assembly_link_url', add_query_arg( $edit_args, $cart_item['data']->get_permalink() ), $cart_item );
 
 		// assembly edit link
-		$assembly_parts[] = '<li class="assembly-edit-link"><a href="' . esc_url( $edit_url ) . '">' . __( 'Edit Assembly', WC_CP_DOMAIN ) . '</a></li>';
+		$assembly_parts[] = '<li class="assembly-edit-link"><a href="' . esc_url( $edit_url ) . '" class="button">' . __( 'Edit Assembly', WC_CP_DOMAIN ) . '</a></li>';
 
 		// append parts list
 		$item_data[] = [
@@ -261,8 +353,14 @@ class Frontend extends Component
 			return $cart_item;
 		}
 
+		if ( !isset( $cart_item['wc_cp_with_need_assembly'] ) )
+		{
+			// mart item that need assembly to add the fee percentage
+			$cart_item['wc_cp_with_need_assembly'] = $this->with_assembly;
+		}
+
 		// new price
-		$new_price = (float) $cart_item['data']->get_price() + wc_cp_products()->calculate_assembly_configuration_parts_total( $cart_item['wc_cp_assembly_config'] );
+		$new_price = (float) $cart_item['data']->get_price() + wc_cp_products()->calculate_assembly_configuration_parts_total( $cart_item['wc_cp_assembly_config'], 1, $cart_item['wc_cp_with_need_assembly'] );
 
 		/**
 		 * Filter assembly configuration price
