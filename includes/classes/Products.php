@@ -257,25 +257,11 @@ class Products extends Component
 	 */
 	public function cart_has_assembly_fee( &$cart )
 	{
-		$fees = $cart->get_fees();
-		if ( empty( $fees ) )
+		foreach ( $cart->get_cart() as $cart_item_key => $cart_item )
 		{
-			// cart has no fees at all
-			return false;
-		}
-
-		$assembly_fees = $this->calculate_assembly_fee( $cart );
-		if ( false === $assembly_fees )
-		{
-			// skip as forced to ignore the assembly fees
-			return false;
-		}
-
-		foreach ( $fees as $fee )
-		{
-			if ( 'assembly-fees' === $fee->id && $assembly_fees === $fee->amount )
+			if ( isset( $cart_item['wc_cp_with_need_assembly'] ) && $cart_item['wc_cp_with_need_assembly'] )
 			{
-				// found it
+				// found
 				return true;
 			}
 		}
@@ -779,10 +765,11 @@ class Products extends Component
 	 *
 	 * @param array|string $assembly_config
 	 * @param int          $quantity
+	 * @param boolean      $with_assembly
 	 *
 	 * @return float
 	 */
-	public function calculate_assembly_configuration_parts_total( $assembly_config, $quantity = 1 )
+	public function calculate_assembly_configuration_parts_total( $assembly_config, $quantity = 1, $with_assembly = false )
 	{
 		if ( is_string( $assembly_config ) )
 		{
@@ -791,6 +778,7 @@ class Products extends Component
 		}
 
 		// vars
+		$product_price  = '';
 		$price_callback = WC()->cart->tax_display_cart === 'excl' ? 'get_price_excluding_tax' : 'get_price_including_tax';
 		$price          = 0;
 
@@ -803,11 +791,61 @@ class Products extends Component
 				continue;
 			}
 
+			if ( $with_assembly )
+			{
+				// set product price with assembly fees before calculate tax
+				$product_price = $this->calculate_price_with_assembly( $_product, $_product->get_price() );
+			}
+
 			// add part price
-			$price += call_user_func( [ &$_product, $price_callback ], $part_item['quantity'] * $quantity );
+			$price += call_user_func( [
+				&$_product,
+				$price_callback,
+			], $part_item['quantity'] * $quantity, $product_price );
 		}
 
-		return $price;
+		/**
+		 * Filter assembly configuration parts totol price
+		 *
+		 * @param float   $price
+		 * @param array   $assembly_config
+		 * @param int     $quantity
+		 * @param boolean $with_assembly
+		 *
+		 * @return float
+		 */
+		return apply_filters( 'wc_cp_assembly_configuration_parts_total', $price, $assembly_config, $quantity, $with_assembly );
+	}
+
+	/**
+	 * Calculate product price with assembly percentage added up
+	 *
+	 * @param WC_Product $product
+	 * @param float      $price
+	 *
+	 * @return float
+	 */
+	public function calculate_price_with_assembly( $product, $price = null )
+	{
+		if ( null === $price )
+		{
+			// get product price if not passed
+			$price = $product->get_price();
+		}
+
+		// percentage
+		$percentage = $this->get_product_assembly_percentage( $product );
+		if ( empty( $percentage ) )
+		{
+			// skip as there are not percentage found
+			return $price;
+		}
+
+		// add up the percentage
+		$price += $price * ( $percentage / 100 );
+
+		// return the total
+		return round( $price, wc_get_price_decimals() );
 	}
 
 	/**
@@ -838,12 +876,18 @@ class Products extends Component
 
 		if ( $this->is_product_variation( $product ) )
 		{
-			// variation product
-			$variation_percentage = abs( floatval( $product->get_parent()->wc_cp_assembly_percentage ) );
-			if ( !empty( $variation_percentage ) )
+			$parent_product = $product->get_parent();
+			if ( $parent_product )
 			{
-				// use the variation instead
-				$product_percentage = $variation_percentage;
+				$parent_id = is_object( $parent_product ) && isset( $parent_product->id ) ? $parent_product->id : $parent_product;
+
+				// variation product
+				$variation_percentage = abs( floatval( get_post_meta( $parent_id, '_wc_cp_assembly_percentage', true ) ) );
+				if ( !empty( $variation_percentage ) )
+				{
+					// use the variation instead
+					$product_percentage = $variation_percentage;
+				}
 			}
 		}
 
