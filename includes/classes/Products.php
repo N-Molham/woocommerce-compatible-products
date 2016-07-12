@@ -914,4 +914,33 @@ class Products extends Component
 	{
 		return get_option( 'wc_cp_assembly_percentage', $this->plugin->backend->default_assembly_percentage );
 	}
+
+	/**
+	 * Check if the given product in an assembly category or not
+	 *
+	 * @param WC_Product $product
+	 *
+	 * @return bool
+	 */
+	public function is_assembly_product( $product )
+	{
+		$categories = wp_get_post_terms( $product->id, 'product_cat', [ 'fields' => 'ids' ] );
+		if ( empty( $categories ) )
+		{
+			// product has no categories set
+			return false;
+		}
+
+		foreach ( $categories as $category_id )
+		{
+			if ( true === (bool) get_term_meta( $category_id, 'wc_cp_assembly_category', true ) )
+			{
+				// found one
+				return true;
+			}
+		}
+
+		// none by default
+		return false;
+	}
 }
