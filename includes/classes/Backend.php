@@ -260,7 +260,7 @@ class Backend extends Component
 			'css'      => '',
 			'class'    => 'regular-text',
 			'type'     => 'text',
-			'default'  => 'Select Options with Assembly',
+			'default'  => __( 'Select Options with Assembly', WC_CP_DOMAIN ),
 		];
 
 		$settings[] = [
