@@ -101,37 +101,33 @@ class Frontend extends Component
 			add_action( 'woocommerce_after_add_to_cart_button', [ &$this, 'assembly_percentage_hidden_input_mark' ] );
 		}
 
-		// WooCommerce after template file loaded hook
-		add_action( 'woocommerce_after_template_part', [ &$this, 'product_page_assembly_button_ui' ] );
+		// WooCommerce add to cart link
+		add_filter( 'woocommerce_loop_add_to_cart_link', [ &$this, 'product_page_assembly_button_ui' ], PHP_INT_MAX, 2 );
 	}
 
 	/**
 	 * Display product page assembly button after the loop "Add to Cart" button
 	 *
-	 * @param string $template_name
+	 * @param string     $add_to_cart_link
+	 * @param WC_Product $product
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public function product_page_assembly_button_ui( $template_name )
+	public function product_page_assembly_button_ui( $add_to_cart_link, $product )
 	{
-		if ( 'loop/add-to-cart.php' !== $template_name )
-		{
-			// skip unwanted template
-			return;
-		}
-
-		$product = wc_get_product();
 		if ( false === wc_cp_products()->is_assembly_product( $product ) )
 		{
 			// skip unwanted category
-			return;
+			return $add_to_cart_link;
 		}
 
 		// vars
 		$button_label = get_option( 'wc_cp_product_assembly_btn_label', __( 'Select Options with Assembly', WC_CP_DOMAIN ) );
 		$button_link  = add_query_arg( 'wc_cp_with_need_assembly', 'yes', $product->get_permalink() );
 
-		wc_cp_view( 'frontend/assembly_product_page_button', compact( 'button_label', 'button_link' ) );
+		$add_to_cart_link .= wc_cp_view( 'frontend/assembly_product_page_button', compact( 'button_label', 'button_link' ), true );
+
+		return $add_to_cart_link;
 	}
 
 	/**
