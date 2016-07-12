@@ -3,6 +3,7 @@
 use WC_Product;
 use WC_Product_Variation;
 use WP_Post;
+use WP_Term;
 
 /**
  * Backend logic
@@ -67,6 +68,48 @@ class Backend extends Component
 
 		// WooCommerce general settings filter
 		add_filter( 'woocommerce_products_general_settings', [ &$this, 'add_search_categories_filter' ] );
+
+		// WooCommerce product category form fields action hook
+		add_action( 'product_cat_add_form_fields', [ &$this, 'add_assembly_category_field' ], PHP_INT_MAX );
+		add_action( 'product_cat_edit_form_fields', [ &$this, 'edit_assembly_category_field' ], PHP_INT_MAX );
+
+		// Save WooCommerce product category data
+		add_action( 'create_product_cat', [ &$this, 'save_assembly_category_data' ] );
+		add_action( 'edit_product_cat', [ &$this, 'save_assembly_category_data' ] );
+	}
+
+	/**
+	 * Save assembly category data
+	 *
+	 * @param int $term_id
+	 *
+	 * @return void
+	 */
+	public function save_assembly_category_data( $term_id )
+	{
+		update_term_meta( $term_id, 'wc_cp_assembly_category', filter_input( INPUT_POST, 'wc_cp_assembly_category', FILTER_SANITIZE_NUMBER_INT ) );
+	}
+
+	/**
+	 * Add assembly category field UI
+	 *
+	 * @return void
+	 */
+	public function add_assembly_category_field()
+	{
+		wc_cp_view( 'admin/category/add_assembly_field', [ 'is_checked' => false ] );
+	}
+
+	/**
+	 * Edit assembly category field UI
+	 *
+	 * @param WP_Term $term
+	 *
+	 * @return void
+	 */
+	public function edit_assembly_category_field( $term )
+	{
+		wc_cp_view( 'admin/category/edit_assembly_field', [ 'is_checked' => (bool) get_term_meta( $term->term_id, 'wc_cp_assembly_category', true ) ] );
 	}
 
 	/**
@@ -207,6 +250,17 @@ class Backend extends Component
 				'step' => 0.5,
 			],
 			'default'           => $this->default_assembly_percentage,
+		];
+
+		$settings[] = [
+			'title'    => __( 'Product button with assembly label', WC_CP_DOMAIN ),
+			'desc'     => __( 'The label of the product page button with assembly fees added', WC_CP_DOMAIN ),
+			'desc_tip' => true,
+			'id'       => 'wc_cp_product_assembly_btn_label',
+			'css'      => '',
+			'class'    => 'regular-text',
+			'type'     => 'text',
+			'default'  => 'Select Options with Assembly',
 		];
 
 		$settings[] = [
