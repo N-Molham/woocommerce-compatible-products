@@ -322,7 +322,7 @@ class Backend extends Component
 			return;
 		}
 
-		$base_dir = WC_CP_URI . Helpers::enqueue_base_dir();
+		$base_dir = WC_CP_URI . Helpers::enqueue_base_url();
 
 		// main js file
 		wp_enqueue_script( 'wc-cp-compatible-products', $base_dir . 'js/admin-products.js', [
