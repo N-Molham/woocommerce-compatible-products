@@ -33,3 +33,7 @@ table#price_calculator {
 	padding-bottom: 6px;
 	font-size: 18px;
 }
+
+.single-product-assembly .woocommerce-variation-price {
+	display: none;
+}
