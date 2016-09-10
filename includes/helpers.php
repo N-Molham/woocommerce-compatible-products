@@ -213,11 +213,11 @@ final class Helpers
 	}
 
 	/**
-	 * Determine scripts and styles enqueues base directory
+	 * Determine scripts and styles enqueues base directory URL
 	 *
 	 * @return string
 	 */
-	public static function enqueue_base_dir()
+	public static function enqueue_base_url()
 	{
 		return self::is_script_debugging() ? 'assets/src/' : 'assets/dist/';
 	}

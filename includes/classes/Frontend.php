@@ -109,6 +109,74 @@ class Frontend extends Component
 
 		// WP single/product title filter
 		add_filter( 'the_title', [ &$this, 'assembly_product_page_title' ], 10, 2 );
+
+		// WC product attribute label filter
+		add_filter( 'woocommerce_attribute_label', [ &$this, 'assembly_product_page_attribute_label' ] );
+
+		// WP body tag css classes filter
+		add_filter( 'body_class', [ &$this, 'assembly_product_page_css_classes' ] );
+
+		add_filter( 'wc_measurement_price_calculator_label', [
+			&$this,
+			'assembly_product_page_measurement_label',
+		] );
+	}
+
+	/**
+	 * Prepend assembly step before measurement label
+	 *
+	 * @param string $label
+	 *
+	 * @return string
+	 */
+	public function assembly_product_page_measurement_label( $label )
+	{
+		if ( false === $this->is_assembly_product_page() )
+		{
+			// skip non-single assembly product page
+			return $label;
+		}
+
+		return '<strong class="assembly-step-label">' . __( 'Step 3.', WC_CP_DOMAIN ) . '</strong> ' . $label;
+	}
+
+	/**
+	 * Assembly product page Unique css class
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
+	public function assembly_product_page_css_classes( $classes )
+	{
+		if ( false === $this->is_assembly_product_page() || in_array( 'single-product-assembly', $classes ) )
+		{
+			// skip non-single assembly product page
+			return $classes;
+		}
+
+		// append assembly product body CSS class
+		$classes[] = 'single-product-assembly';
+
+		return $classes;
+	}
+
+	/**
+	 * Prepend "STEP 2" before length attribute label
+	 *
+	 * @param string $label
+	 *
+	 * @return string
+	 */
+	public function assembly_product_page_attribute_label( $label )
+	{
+		if ( false === $this->is_assembly_product_page() )
+		{
+			// skip non-single assembly product page
+			return $label;
+		}
+
+		return '<span class="assembly-step-label">' . __( 'Step 2.', WC_CP_DOMAIN ) . '</span> ' . $label;
 	}
 
 	/**
@@ -121,9 +189,9 @@ class Frontend extends Component
 	 */
 	public function assembly_product_page_title( $title, $product_id )
 	{
-		if ( false === is_singular( 'product' ) || 'product' !== get_post_type( $product_id ) )
+		if ( false === $this->is_assembly_product_page( $product_id ) )
 		{
-			// skip non-single product pages
+			// skip non-single assembly product page
 			return $title;
 		}
 
@@ -713,8 +781,14 @@ class Frontend extends Component
 			return;
 		}
 
+		// assets base directory URL
+		$base_url = Helpers::enqueue_base_url();
+
+		// main CSS file
+		wp_enqueue_style( 'wc-cp-compatible-products', WC_CP_URI . $base_url . 'css/compatible-products.css', null, wc_compatible_products()->version );
+
 		// load main JS file
-		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . Helpers::enqueue_base_dir() . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
+		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . $base_url . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
 		wp_localize_script( 'wc-cp-compatible-products', 'wc_compatible_products_params', [
 			'edit_assembly_label'            => __( 'Update Assembly', WC_CP_DOMAIN ),
 			'assembly_update_nonce'          => wp_create_nonce( 'wc_cp_cart_update_assembly' ),
@@ -743,5 +817,23 @@ class Frontend extends Component
 		] );
 
 		return ob_get_clean();
+	}
+
+	/**
+	 * Check if current request for assembly product page
+	 *
+	 * @param int|WC_Product $product
+	 *
+	 * @return bool
+	 */
+	public function is_assembly_product_page( $product = false )
+	{
+		if ( !is_object( $product ) )
+		{
+			// current query product
+			$product = wc_get_product( $product );
+		}
+
+		return false === is_admin() && is_product() && $product && wc_cp_products()->is_assembly_product( $product );
 	}
 }
