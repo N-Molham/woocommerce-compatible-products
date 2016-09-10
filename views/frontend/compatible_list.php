@@ -7,7 +7,7 @@
  */
 
 // products query args holder
-$query_args      = [ ];
+$query_args      = [];
 $popover_content = '';
 $panel_data      = array_map( function ( $product )
 {
@@ -72,6 +72,7 @@ $panel_data      = array_map( function ( $product )
 								'input_value' => 1,
 								'min_value'   => 1,
 								'max_value'   => $product['stock_quantity'],
+								'wc_cp_input' => true,
 							], $product['wc_object'] ); ?></div>
 						<div class="col-md-3 col-sm-6 col-xs-4 align-right">
 							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link"
@@ -81,7 +82,7 @@ $panel_data      = array_map( function ( $product )
 						</div>
 					</div>
 				</li>
-				<?php $query_args = [ ]; ?>
+				<?php $query_args = []; ?>
 			<?php endforeach; ?>
 		</ul>
 	</div>
