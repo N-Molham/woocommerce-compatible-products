@@ -29,7 +29,9 @@ c.name=j.variation_name;break}}}else
 // other parts ( fittings )
 for(var g=0,i=q.length;i>g;g++){var m=q[g];"variation_id"in a&&"variation_id"in m&&a.variation_id!==m.variation_id||m.product_id===a.product_id&&(
 // setup item data
-c.qty=a.quantity,c.price=d(m.price*a.quantity),c.name=m.text)}return c.name=c.name.replace(/&lt;.+&gt;/,"").replace(/\s+/g," "),c}var e=a(".variations_form");if(!(e.length<1)){
+c.qty=a.quantity,c.price=d(m.price*a.quantity),c.name=m.text)}
+// clear escaped tags
+return c.name=c.name.replace(/&lt;.+&gt;/,"").replace(/\s+/g," "),c}var e=a(".variations_form");if(!(e.length<1)){
 // vars
 var f=a(b),g=e.data(),h=e.find("input[name=variation_id]"),i=e.find(".variations"),j=a("#measuring-instructions-button").removeClass("hidden"),k=a("#price_calculator"),l=k.find("#length_needed"),m=location.search.indexOf("wc-cp-need-fittings=yes")>-1,n=location.search.indexOf("wc_cp_edit_assembly=yes")>-1,o=null,p=null,q=null;
 // Update assembly configuration
