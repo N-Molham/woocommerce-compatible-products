@@ -504,7 +504,7 @@ class Frontend extends Component
 	 *
 	 * @param WC_Cart $cart
 	 *
-	 * @return array
+	 * @return void
 	 */
 	public function set_assembly_config_total_price_in_cart( $cart )
 	{

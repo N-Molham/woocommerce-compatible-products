@@ -13,9 +13,9 @@ function c(a,b){b=b||!1;var c={data_obj:a,qty:0,name:"-",price:"",is_assembly:!0
 // fetch name
 if(""===f&&wc_price_calculator_params.product_price_unit&&(f=wc_price_calculator_params.product_price_unit),
 // item quantity
-c.qty=l.val(),c.qty=parseFloat(c.qty>0?c.qty:"0"),0===c.qty&&o&&(
+c.qty=l.val(),c.qty=parseFloat(c.qty>0?c.qty:"0"),0===c.qty&&p&&(
 // use current configuration quantity
-c.qty=o.quantity,l.val(c.qty),
+c.qty=p.quantity,l.val(c.qty),
 // trigger calculator change
 e.trigger("wc-measurement-price-calculator-update")),
 // append measure unit
@@ -27,17 +27,17 @@ c.is_assembly=!1,"product_variations"in a)for(var g=0,i=a.product_variations.len
 // set product name
 c.name=j.variation_name;break}}}else
 // other parts ( fittings )
-for(var g=0,i=p.length;i>g;g++){var m=p[g];"variation_id"in a&&"variation_id"in m&&a.variation_id!==m.variation_id||m.product_id===a.product_id&&(
+for(var g=0,i=q.length;i>g;g++){var m=q[g];"variation_id"in a&&"variation_id"in m&&a.variation_id!==m.variation_id||m.product_id===a.product_id&&(
 // setup item data
-c.qty=a.quantity,c.price=d(m.price*a.quantity),c.name=m.text)}return c}var e=a(".variations_form");if(!(e.length<1)){
+c.qty=a.quantity,c.price=d(m.price*a.quantity),c.name=m.text)}return c.name=c.name.replace(/&lt;.+&gt;/,"").replace(/\s+/g," "),c}var e=a(".variations_form");if(!(e.length<1)){
 // vars
-var f=a(b),g=e.data(),h=e.find("input[name=variation_id]"),i=e.find(".variations"),j=a("#measuring-instructions-button").removeClass("hidden"),k=a("#price_calculator"),l=k.find("#length_needed"),m=location.search.indexOf("wc-cp-need-fittings=yes")>-1,n=location.search.indexOf("wc_cp_edit_assembly=yes")>-1,o=null,p=null;
+var f=a(b),g=e.data(),h=e.find("input[name=variation_id]"),i=e.find(".variations"),j=a("#measuring-instructions-button").removeClass("hidden"),k=a("#price_calculator"),l=k.find("#length_needed"),m=location.search.indexOf("wc-cp-need-fittings=yes")>-1,n=location.search.indexOf("wc_cp_edit_assembly=yes")>-1,o=null,p=null,q=null;
 // Update assembly configuration
 e.on("wc-cp-update-assembly-config",function(){
 // items holder
 var a=[];
 // Assembly configuration
-if(o&&"parts"in o){var b=o.parts;for(f=0,h=b.length;h>f;f++)a.push(c(b[f]))}
+if(p&&"parts"in p){var b=p.parts;for(f=0,h=b.length;h>f;f++)a.push(c(b[f]))}
 // main product item
 a.push(c(g,!0));for(var d=[],f=0,h=a.length;h>f;f++){var i=a[f];i.is_assembly&&(
 // append remove button to name
@@ -46,21 +46,25 @@ e.on("click",".wc-cp-remove-assembly",function(){var b=a(this),c=b.data();
 // disable button
 b.prop("disabled",!0),
 // additional props
-c.action="remove_compatible_product_from_assembly",c.security=wc_compatible_products_params.assembly_remove_nonce,c.assembly_key=o.key,a.post(wc_add_to_cart_params.ajax_url,c,function(a){"success"in a?a.success?(o=a.data,e.trigger("wc-cp-update-assembly-config")):alert(a.data):console.log(a)},"json").always(function(){
+c.action="remove_compatible_product_from_assembly",c.security=wc_compatible_products_params.assembly_remove_nonce,c.assembly_key=p.key,a.post(wc_add_to_cart_params.ajax_url,c,function(a){"success"in a?a.success?(p=a.data,e.trigger("wc-cp-update-assembly-config")):alert(a.data):console.log(a)},"json").always(function(){
 // re-enable button
 b.prop("disabled",!1)})}),
 // when price calculator change
-e.on("wc-measurement-price-calculator-update",function(){o&&a.post(wc_add_to_cart_params.ajax_url,{action:"update_assembly_amount",amount:l.val(),assembly_key:o.key,security:wc_compatible_products_params.assembly_quantity_nonce},function(a){"success"in a&&(a.success?
+e.on("wc-measurement-price-calculator-update",function(){p&&a.post(wc_add_to_cart_params.ajax_url,{action:"update_assembly_amount",amount:l.val(),assembly_key:p.key,security:wc_compatible_products_params.assembly_quantity_nonce},function(a){"success"in a&&(a.success?
 // trigger assembly configuration update
 e.trigger("wc-cp-update-assembly-config"):alert(a.data))},"json")}),
 // move button to new location
 a('<tr><td colspan="2"></td></tr>').insertAfter(l.closest("tr")).find("td").append(j),
 // when show compatible products checkbox change
-e.on("change wc-cp-change",".wc-cp-need-compatible",function(a){var b=e.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||m?b.removeClass("hidden"):b.addClass("hidden")}).trigger("wc-cp-change"),
+e.on("change wc-cp-change",".wc-cp-need-compatible",function(a){
+// assembly panels
+var b=e.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||m?b.removeClass("hidden"):b.addClass("hidden"),o&&o.remove();
+// move specifications panel location after the attributes table
+var c=e.find(".panel-specifications");o=c.clone().insertAfter(i),c.remove()}).trigger("wc-cp-change"),
 // when variation changes
 e.on("woocommerce_variation_has_changed",function(){
 // initialize popovers
-e.find(".compatible-product-link").popover(),p=e.find(".wc-cp-products-list").data("products"),f.trigger("vc_reload"),o=e.find(".wc-cp-assembly-config").data("config"),o&&(l.val(o.quantity),e.trigger("wc-measurement-price-calculator-update"),o.parts&&o.parts.length&&(m=!0)),m&&(e.find(".wc-cp-need-compatible").prop("checked",!0),m=!1),e.find(".wc-cp-need-compatible").trigger("wc-cp-change"),e.trigger("wc-cp-update-assembly-config"),n&&(i.addClass("hidden"),e.find(":input:submit").addClass("update-assembly").text(wc_compatible_products_params.edit_assembly_label).parent().append('<input type="hidden" name="wc_cp_update_assembly" value="'+o.key+'" />'))}),
+e.find(".compatible-product-link").popover(),q=e.find(".wc-cp-products-list").data("products"),f.trigger("vc_reload"),p=e.find(".wc-cp-assembly-config").data("config"),p&&(l.val(p.quantity),e.trigger("wc-measurement-price-calculator-update"),p.parts&&p.parts.length&&(m=!0)),m&&(e.find(".wc-cp-need-compatible").prop("checked",!0),m=!1),e.find(".wc-cp-need-compatible").trigger("wc-cp-change"),e.trigger("wc-cp-update-assembly-config"),n&&(i.addClass("hidden"),e.find(":input:submit").addClass("update-assembly").text(wc_compatible_products_params.edit_assembly_label).parent().append('<input type="hidden" name="wc_cp_update_assembly" value="'+p.key+'" />'))}),
 // add product to cart click
 e.on("click",".compatible-product-add-to-cart-link",function(b){b.preventDefault();
 // start loading
@@ -70,4 +74,4 @@ a.post(wc_add_to_cart_params.ajax_url,d,function(a){"object"==typeof a?
 // json response
 a.success?(
 // success
-c.button("added"),o=a.data,f.val(1),e.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):c.button("reset")},"json")})}})}(jQuery,window);
+c.button("added"),p=a.data,f.val(1),e.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):c.button("reset")},"json")})}})}(jQuery,window);

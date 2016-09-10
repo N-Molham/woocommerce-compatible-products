@@ -17,7 +17,7 @@ $panel_data      = array_map( function ( $product )
 }, $compatible_products );
 ?>
 <div class="row">
-	<div class="col-md-6 col-sm-6 col-xs-6"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
+	<div class="col-md-6 col-sm-6 col-xs-6 wc-cp-need-fittings"><?php _e( 'Do you need fittings?', 'woocommerce' ) ?></div>
 	<div class="col-md-6 col-sm-4 col-xs-4">
 		<label>
 			<input class="wc-cp-need-compatible" type="checkbox" value="yes" />
