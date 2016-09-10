@@ -19,6 +19,7 @@
 		    $calculated_amount    = $price_calculator.find( '#length_needed' ),
 		    init_need_fittings    = location.search.indexOf( 'wc-cp-need-fittings=yes' ) > -1,
 		    edit_assembly_mod     = location.search.indexOf( 'wc_cp_edit_assembly=yes' ) > -1,
+		    $current_specs_panel  = null,
 		    current_config        = null,
 		    compatible_products   = null;
 
@@ -116,6 +117,7 @@
 
 		// when show compatible products checkbox change
 		$variations_form.on( 'change wc-cp-change', '.wc-cp-need-compatible', function ( e ) {
+			// assembly panels
 			var $panels = $variations_form.find( '.wc-cp-products-list, .wc-cp-assembly-config' );
 
 			if ( e.target.checked || init_need_fittings ) {
@@ -123,6 +125,15 @@
 			} else {
 				$panels.addClass( 'hidden' );
 			}
+
+			if ( $current_specs_panel ) {
+				$current_specs_panel.remove();
+			}
+
+			// move specifications panel location after the attributes table
+			var $variation_specs_panel = $variations_form.find( '.panel-specifications' );
+			$current_specs_panel       = $variation_specs_panel.clone().insertAfter( $variation_attributes );
+			$variation_specs_panel.remove();
 		} ).trigger( 'wc-cp-change' );
 
 		// when variation changes
@@ -174,9 +185,9 @@
 
 				$variations_form
 				// change add to cart button functionality
-					.find( ':input:submit' ).addClass( 'update-assembly' ).text( wc_compatible_products_params.edit_assembly_label )
+				.find( ':input:submit' ).addClass( 'update-assembly' ).text( wc_compatible_products_params.edit_assembly_label )
 				// append update mark
-					.parent().append( '<input type="hidden" name="wc_cp_update_assembly" value="'+ current_config.key +'" />' );
+				.parent().append( '<input type="hidden" name="wc_cp_update_assembly" value="' + current_config.key + '" />' );
 			}
 		} );
 
@@ -300,6 +311,8 @@
 					part_item.name  = cp.text;
 				}
 			}
+
+			part_item.name = part_item.name.replace( /&lt;.+&gt;/, '' ).replace( /\s+/g, ' ' );
 
 			return part_item;
 		}
