@@ -312,6 +312,7 @@
 				}
 			}
 
+			// clear escaped tags
 			part_item.name = part_item.name.replace( /&lt;.+&gt;/, '' ).replace( /\s+/g, ' ' );
 
 			return part_item;

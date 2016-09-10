@@ -782,13 +782,22 @@ class Frontend extends Component
 		}
 
 		// assets base directory URL
-		$base_url = Helpers::enqueue_base_url();
+		$base_url = WC_CP_URI . Helpers::enqueue_base_url();
+
+		// assets version
+		$version_file   = WC_CP_DIR . 'assets/last_update';
+		$assets_version = file_exists( $version_file ) && is_readable( $version_file ) ? sanitize_key( file_get_contents( $version_file ) ) : null;
+		if ( empty( $assets_version ) )
+		{
+			// fallback to plugin version
+			$assets_version = wc_compatible_products()->version;
+		}
 
 		// main CSS file
-		wp_enqueue_style( 'wc-cp-compatible-products', WC_CP_URI . $base_url . 'css/compatible-products.css', null, wc_compatible_products()->version );
+		wp_enqueue_style( 'wc-cp-compatible-products', $base_url . 'css/compatible-products.css', null, $assets_version );
 
 		// load main JS file
-		wp_enqueue_script( 'wc-cp-compatible-products', WC_CP_URI . $base_url . 'js/compatible-products.js', [ 'jquery' ], wc_compatible_products()->version, true );
+		wp_enqueue_script( 'wc-cp-compatible-products', $base_url . 'js/compatible-products.js', [ 'jquery' ], $assets_version, true );
 		wp_localize_script( 'wc-cp-compatible-products', 'wc_compatible_products_params', [
 			'edit_assembly_label'            => __( 'Update Assembly', WC_CP_DOMAIN ),
 			'assembly_update_nonce'          => wp_create_nonce( 'wc_cp_cart_update_assembly' ),
