@@ -116,10 +116,63 @@ class Frontend extends Component
 		// WP body tag css classes filter
 		add_filter( 'body_class', [ &$this, 'assembly_product_page_css_classes' ] );
 
+		// WC Measurements price label
 		add_filter( 'wc_measurement_price_calculator_label', [
 			&$this,
 			'assembly_product_page_measurement_label',
 		] );
+
+		// WC before template part is loaded
+		add_action( 'woocommerce_before_template_part', [ &$this, 'assembly_product_page_quantity_label' ], 10, 4 );
+
+		// WC before template part is loaded
+		add_action( 'woocommerce_after_template_part', [
+			&$this,
+			'assembly_product_page_quantities_total',
+		], PHP_INT_MAX, 4 );
+	}
+
+	/**
+	 * Assembly quantity label before main qty input
+	 *
+	 * @param string $template_name
+	 * @param string $template_path
+	 * @param string $located
+	 * @param array  $args
+	 *
+	 * @return void
+	 */
+	public function assembly_product_page_quantity_label( $template_name, $template_path, $located, $args )
+	{
+		if ( 'global/quantity-input.php' !== $template_name || isset( $args['wc_cp_input'] ) || false === $this->is_assembly_product_page() )
+		{
+			// skip non-single assembly product page
+			return;
+		}
+
+		echo '<span class="wc-cp-assembly-qty-label">', __( 'Quantity of Assemblies', WC_CP_DOMAIN ), '</span>';
+	}
+
+	/**
+	 * Assembly quantity total after main qty input
+	 *
+	 * @param string $template_name
+	 * @param string $template_path
+	 * @param string $located
+	 * @param array  $args
+	 *
+	 * @return void
+	 */
+	public function assembly_product_page_quantities_total( $template_name, $template_path, $located, $args )
+	{
+		if ( 'global/quantity-input.php' !== $template_name || isset( $args['wc_cp_input'] ) || false === $this->is_assembly_product_page() )
+		{
+			// skip non-single assembly product page
+			return;
+		}
+
+		echo '<div class="wc-cp-assemblies-total">', __( 'Total (Freight not included)', WC_CP_DOMAIN ), '<span class="wc-cp-assemblies-total-number"></span></div>';
+		echo '<br/>';
 	}
 
 	/**

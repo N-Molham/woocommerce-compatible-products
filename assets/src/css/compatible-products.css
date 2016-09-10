@@ -20,7 +20,7 @@
 	text-transform: uppercase;
 }
 
-table#price_calculator {
+.single-product-assembly table#price_calculator {
 	margin-top: 30px;
 	margin-bottom: 30px;
 }
@@ -36,4 +36,28 @@ table#price_calculator {
 
 .single-product-assembly .woocommerce-variation-price {
 	display: none;
+}
+
+.single-product-assembly .product-summary-wrap .woocommerce-variation-add-to-cart div.quantity.buttons_added {
+	width: auto;
+	margin-right: 2.2em;
+}
+
+.single-product-assembly .product-summary-wrap .woocommerce-variation-add-to-cart div.quantity.buttons_added,
+.single-product-assembly .wc-cp-assembly-qty-label,
+.single-product-assembly .wc-cp-assemblies-total {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.single-product-assembly .wc-cp-assembly-qty-label {
+	margin-right: 1em;
+}
+
+.single-product-assembly .product-summary-wrap .single_add_to_cart_button {
+	margin-top: 20px;
+}
+
+.single-product-assembly .single_variation_wrap .variations_button {
+	text-align: right;
 }
