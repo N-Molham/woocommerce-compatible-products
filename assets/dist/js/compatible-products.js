@@ -70,4 +70,4 @@ a.post(wc_add_to_cart_params.ajax_url,d,function(a){"object"==typeof a?
 // json response
 a.success?(
 // success
-c.button("added"),o=a.data,f.val(1),e.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):(c.button("reset"),console.log(a))},"json")})}})}(jQuery,window);
+c.button("added"),o=a.data,f.val(1),e.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):c.button("reset")},"json")})}})}(jQuery,window);
