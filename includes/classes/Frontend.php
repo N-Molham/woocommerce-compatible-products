@@ -102,7 +102,32 @@ class Frontend extends Component
 		}
 
 		// WooCommerce add to cart link
-		add_filter( 'woocommerce_loop_add_to_cart_link', [ &$this, 'product_page_assembly_button_ui' ], PHP_INT_MAX, 2 );
+		add_filter( 'woocommerce_loop_add_to_cart_link', [
+			&$this,
+			'product_page_assembly_button_ui',
+		], PHP_INT_MAX, 2 );
+
+		// WP single/product title filter
+		add_filter( 'the_title', [ &$this, 'assembly_product_page_title' ], 10, 2 );
+	}
+
+	/**
+	 * Append "assembly" label to assmebly product title
+	 *
+	 * @param string $title
+	 * @param int    $product_id
+	 *
+	 * @return string
+	 */
+	public function assembly_product_page_title( $title, $product_id )
+	{
+		if ( false === is_singular( 'product' ) || 'product' !== get_post_type( $product_id ) )
+		{
+			// skip non-single product pages
+			return $title;
+		}
+
+		return $title . ' ' . ( wc_cp_products()->is_assembly_product( wc_get_product( $product_id ) ) ? __( 'Assembly', WC_CP_DOMAIN ) : __( '- Bulk', WC_CP_DOMAIN ) );
 	}
 
 	/**
@@ -175,7 +200,7 @@ class Frontend extends Component
 		$with_assembly   = (boolean) $order_item_meta->meta['wc_cp_with_need_assembly'][0];
 
 		// parts list holder
-		$assembly_parts = [ ];
+		$assembly_parts = [];
 
 		foreach ( $assembly_config['parts'] as $part_item )
 		{
@@ -298,7 +323,7 @@ class Frontend extends Component
 		$with_assembly = false === empty( $cart_item['wc_cp_with_need_assembly'] );
 
 		// parts list holder
-		$assembly_parts = [ ];
+		$assembly_parts = [];
 
 		foreach ( $cart_item['wc_cp_assembly_config']['parts'] as $part_item )
 		{

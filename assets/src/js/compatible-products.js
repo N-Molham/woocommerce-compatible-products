@@ -220,7 +220,6 @@
 				} else {
 					// unknown response format
 					$this.button( 'reset' );
-					console.log( response );
 				}
 			}, 'json' );
 		} );
