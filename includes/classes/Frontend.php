@@ -862,6 +862,7 @@ class Frontend extends Component
 			'woocommerce_price_decimal_sep'  => stripslashes( get_option( 'woocommerce_price_decimal_sep' ) ),
 			'woocommerce_price_thousand_sep' => stripslashes( get_option( 'woocommerce_price_thousand_sep' ) ),
 			'woocommerce_price_trim_zeros'   => get_option( 'woocommerce_price_trim_zeros' ),
+			'is_assembly_product_page'       => $this->is_assembly_product_page(),
 		] );
 	}
 

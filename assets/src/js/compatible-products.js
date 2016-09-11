@@ -24,6 +24,10 @@
 		    current_config        = null,
 		    compatible_products   = null;
 
+		if ( wc_compatible_products_params.is_assembly_product_page ) {
+			init_need_fittings = true;
+		}
+
 		// Update assembly configuration
 		$variations_form.on( 'wc-cp-update-assembly-config', function () {
 			// items holder
