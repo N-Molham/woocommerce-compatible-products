@@ -138,6 +138,17 @@
 				$panels.addClass( 'hidden' );
 			}
 
+			var $assembly_boxes = $panels.filter( '.wc-cp-products-list' );
+			if ( $assembly_boxes.length < 2 ) {
+				// set first box title
+				$assembly_boxes.find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_1 );
+
+				// clone it after it
+				$assembly_boxes.clone().insertAfter( $assembly_boxes )
+				// and set the new title
+				.find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_2 );
+			}
+
 			if ( $current_specs_panel ) {
 				$current_specs_panel.remove();
 			}
@@ -197,7 +208,7 @@
 
 				$variations_form
 				// change add to cart button functionality
-				.find( ':input:submit' ).addClass( 'update-assembly' ).text( wc_compatible_products_params.edit_assembly_label )
+				.find( ':input:submit' ).addClass( 'update-assembly' ).text( wc_compatible_products_params.labels.edit_assembly )
 				// append update mark
 				.parent().append( '<input type="hidden" name="wc_cp_update_assembly" value="' + current_config.key + '" />' );
 			}
@@ -212,12 +223,7 @@
 			    request_data = $this.data( 'args' );
 
 			// set quantity
-			var $qty_input = $variations_form.find( 'input[name="wc_cp_quantity[' + request_data.variation_id + ']"]' );
-			if ( $qty_input.length !== 1 ) {
-				request_data.quantity = 1;
-			} else {
-				request_data.quantity = parseInt( $qty_input.val() );
-			}
+			request_data.quantity = 1;
 
 			// send AJAX request
 			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
@@ -227,11 +233,11 @@
 						// success
 						$this.button( 'added' );
 
+						// trigger box state change
+						$this.closest( '.wc-cp-products-list' ).trigger( 'wc-cp-change-state', [ request_data ] );
+
 						// update the current config with the updated info
 						current_config = response.data;
-
-						// reset qty input
-						$qty_input.val( 1 );
 
 						// trigger assembly configuration update
 						$variations_form.trigger( 'wc-cp-update-assembly-config' );
@@ -245,6 +251,11 @@
 					$this.button( 'reset' );
 				}
 			}, 'json' );
+		} );
+
+		// compatible products boxes state change
+		$variations_form.on( 'wc-cp-change-state', '.wc-cp-products-list', function ( e, product ) {
+			console.log( product );
 		} );
 
 		/**

@@ -73,3 +73,8 @@
 .single-product-assembly .single_variation_wrap .variations_button {
 	text-align: right;
 }
+
+.single-product-assembly .wc-cp-products-list .woocommerce-Price-amount {
+	display: inline-block;
+	vertical-align: sub;
+}

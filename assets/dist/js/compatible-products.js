@@ -66,20 +66,30 @@ a('<tr><td colspan="2"></td></tr>').insertAfter(n.closest("tr")).find("td").appe
 // when show compatible products checkbox change
 f.on("change wc-cp-change",".wc-cp-need-compatible",function(a){
 // assembly panels
-var b=f.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||o?b.removeClass("hidden"):b.addClass("hidden"),q&&q.remove();
+var b=f.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||o?b.removeClass("hidden"):b.addClass("hidden");var c=b.filter(".wc-cp-products-list");c.length<2&&(
+// set first box title
+c.find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_1),
+// clone it after it
+c.clone().insertAfter(c).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_2)),q&&q.remove();
 // move specifications panel location after the attributes table
-var c=f.find(".panel-specifications");q=c.clone().insertAfter(j),c.remove()}).trigger("wc-cp-change"),
+var d=f.find(".panel-specifications");q=d.clone().insertAfter(j),d.remove()}).trigger("wc-cp-change"),
 // when variation changes
 f.on("woocommerce_variation_has_changed",function(){
 // initialize popovers
-f.find(".compatible-product-link").popover(),s=f.find(".wc-cp-products-list").data("products"),g.trigger("vc_reload"),r=f.find(".wc-cp-assembly-config").data("config"),r&&(n.val(r.quantity),f.trigger("wc-measurement-price-calculator-update"),r.parts&&r.parts.length&&(o=!0)),o&&(f.find(".wc-cp-need-compatible").prop("checked",!0),o=!1),f.find(".wc-cp-need-compatible").trigger("wc-cp-change"),f.trigger("wc-cp-update-assembly-config"),p&&(j.addClass("hidden"),f.find(":input:submit").addClass("update-assembly").text(wc_compatible_products_params.edit_assembly_label).parent().append('<input type="hidden" name="wc_cp_update_assembly" value="'+r.key+'" />'))}),
+f.find(".compatible-product-link").popover(),s=f.find(".wc-cp-products-list").data("products"),g.trigger("vc_reload"),r=f.find(".wc-cp-assembly-config").data("config"),r&&(n.val(r.quantity),f.trigger("wc-measurement-price-calculator-update"),r.parts&&r.parts.length&&(o=!0)),o&&(f.find(".wc-cp-need-compatible").prop("checked",!0),o=!1),f.find(".wc-cp-need-compatible").trigger("wc-cp-change"),f.trigger("wc-cp-update-assembly-config"),p&&(j.addClass("hidden"),f.find(":input:submit").addClass("update-assembly").text(wc_compatible_products_params.labels.edit_assembly).parent().append('<input type="hidden" name="wc_cp_update_assembly" value="'+r.key+'" />'))}),
 // add product to cart click
 f.on("click",".compatible-product-add-to-cart-link",function(b){b.preventDefault();
 // start loading
-var c=a(this).button("loading"),d=c.data("args"),e=f.find('input[name="wc_cp_quantity['+d.variation_id+']"]');1!==e.length?d.quantity=1:d.quantity=parseInt(e.val()),
+var c=a(this).button("loading"),d=c.data("args");
+// set quantity
+d.quantity=1,
 // send AJAX request
 a.post(wc_add_to_cart_params.ajax_url,d,function(a){"object"==typeof a?
 // json response
 a.success?(
 // success
-c.button("added"),r=a.data,e.val(1),f.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):c.button("reset")},"json")})}})}(jQuery,window);
+c.button("added"),
+// trigger box state change
+c.closest(".wc-cp-products-list").trigger("wc-cp-change-state",[d]),r=a.data,f.trigger("wc-cp-update-assembly-config")):(c.button("reset"),alert(a.data)):c.button("reset")},"json")}),
+// compatible products boxes state change
+f.on("wc-cp-change-state",".wc-cp-products-list",function(a,b){console.log(b)})}})}(jQuery,window);
