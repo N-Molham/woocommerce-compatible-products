@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WooCommerce Compatible Products and Measurements 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/init\n"
-"POT-Creation-Date: 2016-09-11 15:19:19+00:00\n"
+"POT-Creation-Date: 2016-09-11 17:41:49+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -120,7 +120,7 @@ msgstr ""
 msgid "You must accept our assembly specifications."
 msgstr ""
 
-#: includes/classes/Frontend.php:790
+#: includes/classes/Frontend.php:790 views/frontend/compatible_list.php:73
 msgid "Remove"
 msgstr ""
 
@@ -130,8 +130,16 @@ msgid ""
 "fa-plus-circle\"></i> Yes</a> "
 msgstr ""
 
-#: includes/classes/Frontend.php:855
+#: includes/classes/Frontend.php:856
 msgid "Update Assembly"
+msgstr ""
+
+#: includes/classes/Frontend.php:857
+msgid "Step 4: Select Fitting #1"
+msgstr ""
+
+#: includes/classes/Frontend.php:858
+msgid "Step 5: Select Fitting #2"
 msgstr ""
 
 #: init.php:178
@@ -155,7 +163,6 @@ msgid "No"
 msgstr ""
 
 #: views/admin/product_data/compatibles_field.php:10
-#: views/frontend/compatible_list.php:30
 msgid "Compatible Products"
 msgstr ""
 
@@ -174,31 +181,27 @@ msgstr ""
 msgid "Read More"
 msgstr ""
 
-#: views/frontend/compatible_list.php:80
+#: views/frontend/compatible_list.php:73
 msgid "Adding..."
 msgstr ""
 
-#: views/frontend/compatible_list.php:80
-msgid "Added"
-msgstr ""
-
-#: views/frontend/compatible_list.php:81
+#: views/frontend/compatible_list.php:74
 msgid "Add"
 msgstr ""
 
-#: views/frontend/compatible_list.php:92
+#: views/frontend/compatible_list.php:85
 msgid "Review your assembly configuration"
 msgstr ""
 
-#: views/frontend/compatible_list.php:97
+#: views/frontend/compatible_list.php:90
 msgid "Qty"
 msgstr ""
 
-#: views/frontend/compatible_list.php:98
+#: views/frontend/compatible_list.php:91
 msgid "Product"
 msgstr ""
 
-#: views/frontend/compatible_list.php:99
+#: views/frontend/compatible_list.php:92
 msgid "Price"
 msgstr ""
 

@@ -852,7 +852,11 @@ class Frontend extends Component
 		// load main JS file
 		wp_enqueue_script( 'wc-cp-compatible-products', $base_url . 'js/compatible-products.js', [ 'jquery' ], $assets_version, true );
 		wp_localize_script( 'wc-cp-compatible-products', 'wc_compatible_products_params', [
-			'edit_assembly_label'            => __( 'Update Assembly', WC_CP_DOMAIN ),
+			'labels'                         => [
+				'edit_assembly'  => __( 'Update Assembly', WC_CP_DOMAIN ),
+				'assembly_box_1' => __( 'Step 4: Select Fitting #1', WC_CP_DOMAIN ),
+				'assembly_box_2' => __( 'Step 5: Select Fitting #2', WC_CP_DOMAIN ),
+			],
 			'assembly_update_nonce'          => wp_create_nonce( 'wc_cp_cart_update_assembly' ),
 			'assembly_remove_nonce'          => wp_create_nonce( 'wc_cp_remove_assembly_item' ),
 			'assembly_quantity_nonce'        => wp_create_nonce( 'wc_cp_update_assembly_main_product_quantity' ),

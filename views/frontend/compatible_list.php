@@ -27,7 +27,7 @@ $panel_data      = array_map( function ( $product )
 </div>
 
 <div class="panel panel-primary wc-cp-products-list hidden" data-products="<?php echo esc_attr( json_encode( $panel_data ) ); ?>">
-	<div class="panel-heading"><?php _e( 'Compatible Products', 'woocommerce' ); ?></div>
+	<div class="panel-heading"></div>
 	<div class="panel-body">
 		<ul class="list-group">
 			<?php foreach ( $compatible_products as $product ) : ?>
@@ -61,23 +61,16 @@ $panel_data      = array_map( function ( $product )
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
-						<div class="col-md-5 col-sm-6">
+						<div class="col-md-6 col-sm-8 col-xs-12">
 							<a href="<?php echo wp_is_mobile() ? 'javascript:void(0);' : esc_url( $product['product_link'] ); ?>" target="_blank" class="compatible-product-link"
 							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="<?php echo wp_is_mobile() ? 'focus' : 'hover' ?>"
 							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>"><?php echo $product['text']; ?></a>
 						</div>
-						<div class="col-md-2 col-sm-6 col-xs-4 align-center"><?php echo $product['price_formatted']; ?></div>
-						<div class="col-md-2 col-sm-6 col-xs-4 align-center"><?php woocommerce_quantity_input( [
-								'input_name'  => 'wc_cp_quantity[' . ( $product['is_variation'] ? $product['variation_id'] : $product['product_id'] ) . ']',
-								'input_value' => 1,
-								'min_value'   => 1,
-								'max_value'   => $product['stock_quantity'],
-								'wc_cp_input' => true,
-							], $product['wc_object'] ); ?></div>
-						<div class="col-md-3 col-sm-6 col-xs-4 align-right">
-							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link"
-							   data-args="<?php echo esc_attr( json_encode( $query_args ) ); ?>"
-							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Added', 'woocommerce' ); ?>"><?php
+						<div class="col-md-3 col-sm-4 col-xs-8 align-right"><?php echo $product['price_formatted']; ?></div>
+						<div class="col-md-3 col-sm-12 col-xs-4 align-right">
+							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link" data-args="<?php echo esc_attr( json_encode( $query_args ) ); ?>"
+							   data-product="<?php echo isset( $query_args['variation_id'] ) ? $query_args['variation_id'] : $query_args['product_id']; ?>"
+							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Remove', 'woocommerce' ); ?>"><?php
 								_e( 'Add', 'woocommerce' ); ?></a>
 						</div>
 					</div>
