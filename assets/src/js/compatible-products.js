@@ -14,6 +14,7 @@
 		    product_data          = $variations_form.data(),
 		    $variation_id         = $variations_form.find( 'input[name=variation_id]' ),
 		    $variation_attributes = $variations_form.find( '.variations' ),
+		    $assembly_subtotal    = $variations_form.find( '.wc-cp-assemblies-subtotal-amount' ),
 		    $instructions_btn     = $( '#measuring-instructions-button' ).removeClass( 'hidden' ),
 		    $price_calculator     = $( '#price_calculator' ),
 		    $calculated_amount    = $price_calculator.find( '#length_needed' ),
@@ -26,7 +27,8 @@
 		// Update assembly configuration
 		$variations_form.on( 'wc-cp-update-assembly-config', function () {
 			// items holder
-			var config_items = [];
+			var config_items = [],
+			    subtotal     = 0;
 
 			// Assembly configuration
 			if ( current_config && 'parts' in current_config ) {
@@ -51,11 +53,17 @@
 						'<i class="fa fa-times"></i></a>';
 				}
 
+				// build row data
 				rows.push( '<tr><td class="qty">' + config_item.qty + '</td>' +
 					'<td class="name">' + config_item.name + '</td>' +
 					'<td class="price">' + config_item.price + '</td></tr>' );
+
+				subtotal += config_item.total;
 			}
 			$variations_form.find( '.wc-cp-config-container' ).html( rows.join( '' ) );
+
+			// assembly subtotal amount
+			$assembly_subtotal.html( wc_format_price( subtotal ) );
 		} );
 
 		/* Assembly configuration item remove button clicked*/
@@ -248,9 +256,12 @@
 
 			var part_item = {
 				data_obj   : item_data,
-				qty        : 0,
+				raw_qty    : 0,
+				qty        : '',
 				name       : '-',
 				price      : '',
+				raw_price  : 0,
+				total      : 0,
 				is_assembly: true // is assembly part or not
 			};
 
@@ -261,22 +272,27 @@
 				}
 
 				// item quantity
-				part_item.qty = $calculated_amount.val();
-				part_item.qty = parseFloat( part_item.qty > 0 ? part_item.qty : '0' );
-				if ( 0 === part_item.qty && current_config ) {
+				part_item.raw_qty = $calculated_amount.val();
+				part_item.raw_qty = parseFloat( part_item.raw_qty > 0 ? part_item.raw_qty : '0' );
+				if ( 0 === part_item.raw_qty && current_config ) {
 					// use current configuration quantity
-					part_item.qty = current_config.quantity;
-					$calculated_amount.val( part_item.qty );
+					part_item.raw_qty = current_config.quantity;
+					$calculated_amount.val( part_item.raw_qty );
 
 					// trigger calculator change
 					$variations_form.trigger( 'wc-measurement-price-calculator-update' );
 				}
 
-				// append measure unit
-				part_item.qty = part_item.qty.toString() + ' ' + qty_unit;
-
 				// item price
-				part_item.price = '<span class="amount">' + $price_calculator.find( '.product_price .amount' ).text() + '</span>';
+				part_item.price     = $price_calculator.find( '.product_price .amount' ).text();
+				part_item.raw_price = parseFloat( part_item.price.replace( wc_compatible_products_params.woocommerce_currency_symbol, '' ) );
+				part_item.total     = part_item.raw_qty * part_item.raw_price;
+
+				// append measure unit formatted
+				part_item.qty = part_item.raw_qty.toString() + ' ' + qty_unit;
+
+				// item price formatted
+				part_item.price = '<span class="amount">' + part_item.price + '</span>';
 
 				// is assembly item or not
 				part_item.is_assembly = false;
@@ -306,9 +322,11 @@
 					}
 
 					// setup item data
-					part_item.qty   = item_data.quantity;
-					part_item.price = wc_format_price( cp.price * item_data.quantity );
-					part_item.name  = cp.text;
+					part_item.raw_qty = item_data.quantity;
+					part_item.qty     = number_format( item_data.quantity );
+					part_item.total   = cp.price * item_data.quantity;
+					part_item.price   = wc_format_price( part_item.total );
+					part_item.name    = cp.text;
 				}
 			}
 
@@ -375,6 +393,33 @@
 				formatted_price = '<span class="amount">' + price + "&nbsp;" + currency_symbol + "</span>"
 		}
 		return formatted_price;
+	}
+
+	function number_format( number, decimals, decPoint, thousandsSep ) {
+
+		number   = (number + '').replace( /[^0-9+\-Ee.]/g, '' );
+		var n    = !isFinite( +number ) ? 0 : +number;
+		var prec = !isFinite( +decimals ) ? 0 : Math.abs( decimals );
+		var sep  = (typeof thousandsSep === 'undefined') ? ',' : thousandsSep;
+		var dec  = (typeof decPoint === 'undefined') ? '.' : decPoint;
+		var s    = '';
+
+		var toFixedFix = function ( n, prec ) {
+			var k = Math.pow( 10, prec )
+			return '' + (Math.round( n * k ) / k)
+				.toFixed( prec )
+		};
+
+		s = (prec ? toFixedFix( n, prec ) : '' + Math.round( n )).split( '.' );
+		if ( s[ 0 ].length > 3 ) {
+			s[ 0 ] = s[ 0 ].replace( /\B(?=(?:\d{3})+(?!\d))/g, sep );
+		}
+		if ( (s[ 1 ] || '').length < prec ) {
+			s[ 1 ] = s[ 1 ] || '';
+			s[ 1 ] += new Array( prec - s[ 1 ].length + 1 ).join( '0' );
+		}
+
+		return s.join( dec );
 	}
 
 })( jQuery, window );
