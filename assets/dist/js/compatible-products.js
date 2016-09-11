@@ -19,7 +19,7 @@ c.raw_qty=r.quantity,n.val(c.raw_qty),
 // trigger calculator change
 f.trigger("wc-measurement-price-calculator-update")),
 // item price
-c.price=m.find(".product_price .amount").text(),c.raw_price=parseFloat(c.price.replace(wc_compatible_products_params.woocommerce_currency_symbol,"")),c.total=c.raw_qty*c.raw_price,
+c.price=m.find(".product_price .amount").text(),c.raw_price=parseFloat(c.price.replace(wc_compatible_products_params.woocommerce_currency_symbol,"")),c.total=c.raw_price,
 // append measure unit formatted
 c.qty=c.raw_qty.toString()+" "+g,
 // item price formatted
