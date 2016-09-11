@@ -171,8 +171,8 @@ class Frontend extends Component
 			return;
 		}
 
-		echo '<div class="wc-cp-assemblies-total">', __( 'Total (Freight not included)', WC_CP_DOMAIN ), '<span class="wc-cp-assemblies-total-number"></span></div>';
-		echo '<br/>';
+		echo '<div class="wc-cp-assemblies-total">', __( 'Total (Freight not included)', WC_CP_DOMAIN ),
+		'<span class="wc-cp-assemblies-subtotal-amount"></span></div><br/>';
 	}
 
 	/**

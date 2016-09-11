@@ -25,13 +25,25 @@
 	margin-bottom: 30px;
 }
 
-.single-product-assembly .wc-cp-need-fittings {
-	text-transform: uppercase;
+.single-product-assembly .wc-cp-need-fittings,
+.single-product-assembly .wc-cp-assemblies-total {
 	font-weight: bold;
 	background-color: #f5ac07;
+}
+
+.single-product-assembly .wc-cp-need-fittings {
+	text-transform: uppercase;
 	padding-top: 6px;
 	padding-bottom: 6px;
 	font-size: 18px;
+}
+
+.single-product-assembly .wc-cp-assemblies-total {
+	padding: 8px 14px;
+}
+
+.single-product-assembly .wc-cp-assemblies-subtotal-amount {
+	display: block;
 }
 
 .single-product-assembly .woocommerce-variation-price {
