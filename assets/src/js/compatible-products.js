@@ -286,7 +286,7 @@
 				// item price
 				part_item.price     = $price_calculator.find( '.product_price .amount' ).text();
 				part_item.raw_price = parseFloat( part_item.price.replace( wc_compatible_products_params.woocommerce_currency_symbol, '' ) );
-				part_item.total     = part_item.raw_qty * part_item.raw_price;
+				part_item.total     = part_item.raw_price;
 
 				// append measure unit formatted
 				part_item.qty = part_item.raw_qty.toString() + ' ' + qty_unit;
