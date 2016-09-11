@@ -35,7 +35,7 @@ c.raw_qty=a.quantity,c.qty=e(a.quantity),c.total=l.price*a.quantity,c.price=d(c.
 // clear escaped tags
 return c.name=c.name.replace(/&lt;.+&gt;/,"").replace(/\s+/g," "),c}var f=a(".variations_form");if(!(f.length<1)){
 // vars
-var g=a(b),h=f.data(),i=f.find("input[name=variation_id]"),j=f.find(".variations"),k=f.find(".wc-cp-assemblies-subtotal-amount"),l=a("#measuring-instructions-button").removeClass("hidden"),m=a("#price_calculator"),n=m.find("#length_needed"),o=location.search.indexOf("wc-cp-need-fittings=yes")>-1,p=location.search.indexOf("wc_cp_edit_assembly=yes")>-1,q=null,r=null,s=null;
+var g=a(b),h=f.data(),i=f.find("input[name=variation_id]"),j=f.find(".variations"),k=f.find(".wc-cp-assemblies-subtotal-amount"),l=a("#measuring-instructions-button").removeClass("hidden"),m=a("#price_calculator"),n=m.find("#length_needed"),o=location.search.indexOf("wc-cp-need-fittings=yes")>-1,p=location.search.indexOf("wc_cp_edit_assembly=yes")>-1,q=null,r=null,s=null;wc_compatible_products_params.is_assembly_product_page&&(o=!0),
 // Update assembly configuration
 f.on("wc-cp-update-assembly-config",function(){
 // items holder
