@@ -2,6 +2,8 @@
  * Created by nabeel on 5/18/16.
  */
 (function ( $, win, undefined ) {
+	"use strict";
+
 	$( function () {
 		var $variations_form = $( '.variations_form' );
 		if ( $variations_form.length < 1 ) {
@@ -29,20 +31,40 @@
 		}
 
 		// Update assembly configuration
-		$variations_form.on( 'wc-cp-update-assembly-config', function () {
+		$variations_form.on( 'wc-cp-update-assembly-config', function ( e, $trigger_button ) {
 			// items holder
 			var config_items = [],
 			    subtotal     = 0;
 
+			// clear any previous selections
+			$variations_form.find( '.wc-cp-products-list' ).trigger( 'wc-cp-change-state' );
+
 			// Assembly configuration
-			if ( current_config && 'parts' in current_config ) {
+			if ( current_config && 'parts' in current_config && current_config.parts.length ) {
 				var parts = current_config.parts;
 				for ( i = 0, len = parts.length; i < len; i++ ) {
-					config_items.push( setup_assembly_config_item( parts[ i ] ) );
+					// vars
+					var part_data            = parts[ i ],
+					    part_pid             = part_data.variation_id ? part_data.variation_id : part_data.product_id,
+					    $part_trigger_button = $trigger_button;
+
+					// find related add-to-assembly button
+					if ( undefined === $trigger_button || part_pid != $trigger_button.data( 'product' ) ) {
+						// query it instead
+						$part_trigger_button = $variations_form.find( '.compatible-product-add-to-cart-link[data-product="' + part_pid + '"]:not(.disabled):first()' );
+					}
+
+					if ( $part_trigger_button.length ) {
+						// trigger box state change
+						$part_trigger_button.closest( '.wc-cp-products-list' ).trigger( 'wc-cp-change-state', [ $part_trigger_button ] );
+					}
+
+					// get item setup
+					config_items.push( setup_assembly_config_item( part_data ) );
 				}
 			}
 
-			// main product item
+			// get main product item setup0
 			config_items.push( setup_assembly_config_item( product_data, true ) );
 
 			// populate config table
@@ -68,39 +90,6 @@
 
 			// assembly subtotal amount
 			$assembly_subtotal.html( wc_format_price( subtotal ) );
-		} );
-
-		/* Assembly configuration item remove button clicked*/
-		$variations_form.on( 'click', '.wc-cp-remove-assembly', function () {
-			var $this        = $( this ),
-			    request_data = $this.data();
-
-			// disable button
-			$this.prop( 'disabled', true );
-
-			// additional props
-			request_data.action       = 'remove_compatible_product_from_assembly';
-			request_data.security     = wc_compatible_products_params.assembly_remove_nonce;
-			request_data.assembly_key = current_config.key;
-
-			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
-				if ( 'success' in response ) {
-					if ( response.success ) {
-						// update the configuration object
-						current_config = response.data;
-
-						// trigger assembly configuration update
-						$variations_form.trigger( 'wc-cp-update-assembly-config' );
-					} else {
-						alert( response.data );
-					}
-				} else {
-					console.log( response );
-				}
-			}, 'json' ).always( function () {
-				// re-enable button
-				$this.prop( 'disabled', false );
-			} );
 		} );
 
 		// when price calculator change
@@ -203,8 +192,6 @@
 			if ( edit_assembly_mod ) {
 				// disable any validations changes for now
 				$variation_attributes.addClass( 'hidden' );
-				/*$variation_attributes.find( 'select' ).prop( 'disabled', true ).addClass( 'disabled' );
-				 $variation_attributes.find( '.reset_variations' ).remove();*/
 
 				$variations_form
 				// change add to cart button functionality
@@ -218,6 +205,11 @@
 		$variations_form.on( 'click', '.compatible-product-add-to-cart-link', function ( e ) {
 			e.preventDefault();
 
+			// skip disabled buttons
+			if ( e.currentTarget.className.indexOf( 'disabled' ) > -1 ) {
+				return;
+			}
+
 			// start loading
 			var $this        = $( this ).button( 'loading' ),
 			    request_data = $this.data( 'args' );
@@ -230,32 +222,103 @@
 				if ( typeof response === 'object' ) {
 					// json response
 					if ( response.success ) {
-						// success
-						$this.button( 'added' );
-
-						// trigger box state change
-						$this.closest( '.wc-cp-products-list' ).trigger( 'wc-cp-change-state', [ request_data ] );
-
 						// update the current config with the updated info
+						current_config = response.data;
+
+						// trigger assembly configuration update
+						$variations_form.trigger( 'wc-cp-update-assembly-config', [ $this ] );
+					} else {
+						// error
+						$this.button( 'reset' );
+						console.log( response.data );
+					}
+				} else {
+					// unknown response format
+					$this.button( 'reset' );
+					console.log( response );
+				}
+			}, 'json' );
+		} );
+
+		// add product to cart click
+		$variations_form.on( 'click', '.compatible-product-remove-from-assembly-link', function ( e ) {
+			e.preventDefault();
+
+			// skip disabled buttons
+			if ( e.currentTarget.className.indexOf( 'hidden' ) > -1 ) {
+				return;
+			}
+
+			// start loading
+			var $this        = $( this ).button( 'loading' ),
+			    request_data = $this.data( 'args' );
+
+			// remove from assembly
+			var selector_attr = request_data.variation_id ? 'data-vid=' + request_data.variation_id : 'data-pid=' + request_data.product_id;
+
+			// remove mark class
+			$this.siblings( '.compatible-product-add-to-cart-link' ).removeClass( 'product-added' );
+
+			// trigger remove event
+			$variations_form.find( '.wc-cp-remove-assembly[' + selector_attr + ']' ).trigger( 'wc-cp-remove' );
+		} );
+
+		// Assembly configuration item remove button clicked
+		$variations_form.on( 'click wc-cp-remove', '.wc-cp-remove-assembly', function () {
+			var $this        = $( this ),
+			    request_data = $this.data();
+
+			// disable button
+			$this.prop( 'disabled', true );
+
+			// additional props
+			request_data.action       = 'remove_compatible_product_from_assembly';
+			request_data.security     = wc_compatible_products_params.assembly_remove_nonce;
+			request_data.assembly_key = current_config.key;
+
+			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {
+				if ( 'success' in response ) {
+					if ( response.success ) {
+						// update the configuration object
 						current_config = response.data;
 
 						// trigger assembly configuration update
 						$variations_form.trigger( 'wc-cp-update-assembly-config' );
 					} else {
-						// error
-						$this.button( 'reset' );
 						alert( response.data );
 					}
 				} else {
-					// unknown response format
-					$this.button( 'reset' );
+					console.log( response );
 				}
-			}, 'json' );
+			}, 'json' ).always( function () {
+				// re-enable button
+				$this.prop( 'disabled', false );
+			} );
 		} );
 
 		// compatible products boxes state change
-		$variations_form.on( 'wc-cp-change-state', '.wc-cp-products-list', function ( e, product ) {
-			console.log( product );
+		$variations_form.on( 'wc-cp-change-state', '.wc-cp-products-list', function ( e, $button ) {
+			// this panel
+			var $panel = $( this );
+
+			// reset all panel button
+			var $panel_buttons = $panel.find( '.compatible-product-add-to-cart-link' ).button( 'reset' ).removeClass( 'disabled product-added' );
+
+			// hide any remove buttons
+			$panel.find( '.compatible-product-remove-from-assembly-link' ).addClass( 'hidden' ).button( 'reset' );
+
+			if ( $button ) {
+				// switch label
+				$button.button( 'added' )
+				// mark as added
+				.addClass( 'product-added' );
+
+				// show up the related remove button
+				$button.siblings( '.compatible-product-remove-from-assembly-link' ).removeClass( 'hidden' );
+
+				// disable all other products buttons on this list
+				$panel_buttons.not( '.product-added' ).addClass( 'disabled' );
+			}
 		} );
 
 		/**
@@ -314,6 +377,7 @@
 
 				// fetch name
 				if ( 'product_variations' in item_data ) {
+					//noinspection JSDuplicatedDeclaration
 					for ( var i = 0, len = item_data.product_variations.length; i < len; i++ ) {
 						var variation = item_data.product_variations[ i ];
 						if ( variation.variation_id.toString() === $variation_id.val() ) {
@@ -325,6 +389,7 @@
 				}
 			} else {
 				// other parts ( fittings )
+				//noinspection JSDuplicatedDeclaration
 				for ( var i = 0, len = compatible_products.length; i < len; i++ ) {
 					var cp = compatible_products[ i ];
 
@@ -353,14 +418,14 @@
 	} );
 
 	function update_query_string_param( key, value ) {
-		baseUrl        = [ location.protocol, '//', location.host, location.pathname ].join( '' );
-		urlQueryString = document.location.search;
-		var newParam   = key + '=' + value,
-		    params     = '?' + newParam;
+		var baseUrl        = [ location.protocol, '//', location.host, location.pathname ].join( '' ),
+		    urlQueryString = document.location.search,
+		    newParam       = key + '=' + value,
+		    params         = '?' + newParam;
 
 		// If the "search" string exists, then build params from it
 		if ( urlQueryString ) {
-			keyRegex = new RegExp( '([\?&])' + key + '[^&]*' );
+			var keyRegex = new RegExp( '([\?&])' + key + '[^&]*' );
 			// If param exists already, update it
 			if ( urlQueryString.match( keyRegex ) !== null ) {
 				params = urlQueryString.replace( keyRegex, "$1" + newParam );
@@ -413,14 +478,14 @@
 	function number_format( number, decimals, decPoint, thousandsSep ) {
 
 		number   = (number + '').replace( /[^0-9+\-Ee.]/g, '' );
-		var n    = !isFinite( +number ) ? 0 : +number;
-		var prec = !isFinite( +decimals ) ? 0 : Math.abs( decimals );
-		var sep  = (typeof thousandsSep === 'undefined') ? ',' : thousandsSep;
-		var dec  = (typeof decPoint === 'undefined') ? '.' : decPoint;
-		var s    = '';
+		var n    = !isFinite( +number ) ? 0 : +number,
+		    prec = !isFinite( +decimals ) ? 0 : Math.abs( decimals ),
+		    sep  = (typeof thousandsSep === 'undefined') ? ',' : thousandsSep,
+		    dec  = (typeof decPoint === 'undefined') ? '.' : decPoint,
+		    s;
 
 		var toFixedFix = function ( n, prec ) {
-			var k = Math.pow( 10, prec )
+			var k = Math.pow( 10, prec );
 			return '' + (Math.round( n * k ) / k)
 				.toFixed( prec )
 		};
