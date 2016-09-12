@@ -46,7 +46,9 @@ var e=[],h=0;
 // Assembly configuration
 if(
 // clear any previous selections
-g.find(".wc-cp-products-list").trigger("wc-cp-change-state"),s&&"parts"in s&&s.parts.length){var j=s.parts;for(p=0,q=j.length;q>p;p++){
+g.find(".wc-cp-products-list").trigger("wc-cp-change-state"),s&&"parts"in s&&s.parts.length){
+// sort parts by box order
+var j=s.parts.sort(function(a,b){return a.box_order>b.box_order?1:b.box_order>a.box_order?-1:0});for(p=0,q=j.length;q>p;p++){
 // vars
 var k=j[p],m=k.variation_id?k.variation_id:k.product_id,n=b;
 // find related add-to-assembly button
@@ -76,9 +78,9 @@ g.on("change wc-cp-change",".wc-cp-need-compatible",function(a){
 // assembly panels
 var b=g.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||p?b.removeClass("hidden"):b.addClass("hidden");var c=b.filter(".wc-cp-products-list");c.length<2&&(
 // set first box title
-c.find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_1),
+c.attr("data-order",1).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_1),
 // clone it after it
-c.clone().insertAfter(c).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_2)),r&&r.remove();
+c.clone().attr("data-order",2).insertAfter(c).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_2)),r&&r.remove();
 // move specifications panel location after the attributes table
 var d=g.find(".panel-specifications");r=d.clone().insertAfter(k),d.remove()}).trigger("wc-cp-change"),
 // when variation changes
@@ -92,7 +94,7 @@ if(b.preventDefault(),!(b.currentTarget.className.indexOf("disabled")>-1)){
 // start loading
 var c=a(this).button("loading"),d=c.data("args");
 // set quantity
-d.quantity=1,
+d.quantity=1,d.box_order=c.closest(".wc-cp-products-list").attr("data-order"),
 // send AJAX request
 a.post(wc_add_to_cart_params.ajax_url,d,function(a){"object"==typeof a?
 // json response
