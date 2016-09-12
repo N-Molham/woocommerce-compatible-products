@@ -58,6 +58,7 @@ $panel_data      = array_map( function ( $product )
 					$popover_content[] = '<a href="' . esc_url( $product['product_link'] ) . '" target="_blank" class="button btn btn-block wc-cp-product-link">' . __( 'Read More', 'woocommerce' ) . '</a>';
 				}
 
+				$query_args_esc = esc_attr( json_encode( $query_args ) );
 				?>
 				<li class="list-group-item compatible-product">
 					<div class="row">
@@ -66,11 +67,16 @@ $panel_data      = array_map( function ( $product )
 							   data-toggle="popover" data-html="true" data-placement="top" data-trigger="<?php echo wp_is_mobile() ? 'focus' : 'hover' ?>"
 							   data-content="<?php echo esc_attr( implode( '', $popover_content ) ); ?>"><?php echo $product['text']; ?></a>
 						</div>
-						<div class="col-md-3 col-sm-4 col-xs-8 align-right"><?php echo $product['price_formatted']; ?></div>
-						<div class="col-md-3 col-sm-12 col-xs-4 align-right">
-							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link" data-args="<?php echo esc_attr( json_encode( $query_args ) ); ?>"
+						<div class="col-md-2 col-sm-4 col-xs-8 align-right"><?php echo $product['price_formatted']; ?></div>
+						<div class="col-md-4 col-sm-12 col-xs-4 align-right">
+							<a href="javascript:void(0)" class="button compatible-product-remove-from-assembly-link hidden"
+							   data-args="<?php echo $query_args_esc; ?>" data-loading-text="<?php _e( 'Loading...', 'woocommerce' ); ?>"
+							   data-product="<?php echo isset( $query_args['variation_id'] ) ? $query_args['variation_id'] : $query_args['product_id']; ?>"><?php
+								_e( 'Remove', 'woocommerce' ); ?></a>
+
+							<a href="javascript:void(0)" class="button compatible-product-add-to-cart-link" data-args="<?php echo $query_args_esc; ?>"
 							   data-product="<?php echo isset( $query_args['variation_id'] ) ? $query_args['variation_id'] : $query_args['product_id']; ?>"
-							   data-loading-text="<?php _e( 'Adding...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Remove', 'woocommerce' ); ?>"><?php
+							   data-loading-text="<?php _e( 'Loading...', 'woocommerce' ); ?>" data-added-text="<?php _e( 'Added', 'woocommerce' ); ?>"><?php
 								_e( 'Add', 'woocommerce' ); ?></a>
 						</div>
 					</div>
