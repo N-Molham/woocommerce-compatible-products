@@ -41,7 +41,19 @@
 
 			// Assembly configuration
 			if ( current_config && 'parts' in current_config && current_config.parts.length ) {
-				var parts = current_config.parts;
+				// sort parts by box order
+				var parts = current_config.parts.sort( function ( item_a, item_b ) {
+					if ( item_a.box_order > item_b.box_order ) {
+						return 1;
+					}
+
+					if ( item_b.box_order > item_a.box_order ) {
+						return -1;
+					}
+
+					return 0;
+				} );
+
 				for ( i = 0, len = parts.length; i < len; i++ ) {
 					// vars
 					var part_data            = parts[ i ],
@@ -130,10 +142,10 @@
 			var $assembly_boxes = $panels.filter( '.wc-cp-products-list' );
 			if ( $assembly_boxes.length < 2 ) {
 				// set first box title
-				$assembly_boxes.find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_1 );
+				$assembly_boxes.attr( 'data-order', 1 ).find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_1 );
 
 				// clone it after it
-				$assembly_boxes.clone().insertAfter( $assembly_boxes )
+				$assembly_boxes.clone().attr( 'data-order', 2 ).insertAfter( $assembly_boxes )
 				// and set the new title
 				.find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_2 );
 			}
@@ -215,7 +227,8 @@
 			    request_data = $this.data( 'args' );
 
 			// set quantity
-			request_data.quantity = 1;
+			request_data.quantity  = 1;
+			request_data.box_order = $this.closest( '.wc-cp-products-list' ).attr( 'data-order' );
 
 			// send AJAX request
 			$.post( wc_add_to_cart_params.ajax_url, request_data, function ( response ) {

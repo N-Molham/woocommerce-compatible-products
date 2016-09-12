@@ -130,6 +130,7 @@ class Ajax_Handler extends Component
 		$product_id   = absint( filter_input( INPUT_POST, 'product_id', FILTER_SANITIZE_NUMBER_INT ) );
 		$variation_id = absint( filter_input( INPUT_POST, 'variation_id', FILTER_SANITIZE_NUMBER_INT ) );
 		$quantity     = absint( filter_input( INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT ) );
+		$box_order    = absint( filter_input( INPUT_POST, 'box_order', FILTER_SANITIZE_NUMBER_INT ) );
 		$assembly_key = sanitize_key( filter_input( INPUT_POST, 'assembly_key', FILTER_SANITIZE_STRING ) );
 
 		// assembly configuration
@@ -146,8 +147,14 @@ class Ajax_Handler extends Component
 			$quantity = 1;
 		}
 
+		if ( 0 === $box_order )
+		{
+			// fallback
+			$box_order = 1;
+		}
+
 		// product attributes
-		$attributes = [ ];
+		$attributes = [];
 		foreach ( $_POST as $arg_name => $arg_value )
 		{
 			if ( 0 === strpos( $arg_name, 'attribute_' ) )
@@ -177,7 +184,7 @@ class Ajax_Handler extends Component
 		}
 
 		// save changes
-		$assembly_config = wc_cp_products()->add_assembly_configuration_item( $assembly_config, compact( 'product_id', 'variation_id', 'quantity', 'attributes' ) );
+		$assembly_config = wc_cp_products()->add_assembly_configuration_item( $assembly_config, compact( 'product_id', 'variation_id', 'quantity', 'attributes', 'box_order' ) );
 
 		// success response
 		$this->success( $assembly_config );
