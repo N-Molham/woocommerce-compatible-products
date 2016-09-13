@@ -264,6 +264,17 @@ class Backend extends Component
 		];
 
 		$settings[] = [
+			'title'    => __( 'Continue Shopping Button Link', WC_CP_DOMAIN ),
+			'desc'     => '',
+			'desc_tip' => false,
+			'id'       => 'wc_cp_continue_shopping_url',
+			'css'      => '',
+			'class'    => 'large-text code',
+			'type'     => 'text',
+			'default'  => wc_get_page_permalink( 'shop' ),
+		];
+
+		$settings[] = [
 			'type' => 'sectionend',
 			'id'   => 'wc_cp_options',
 		];
