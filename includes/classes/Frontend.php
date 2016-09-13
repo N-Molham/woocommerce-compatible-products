@@ -130,6 +130,65 @@ class Frontend extends Component
 			&$this,
 			'assembly_product_page_quantities_total',
 		], PHP_INT_MAX, 4 );
+
+		// WC before single product page layout
+		add_action( 'woocommerce_before_single_product', [ &$this, 'unhook_notices_print' ], 0 );
+
+		// WC product meta data ends hook
+		add_action( 'woocommerce_product_meta_end', [ &$this, 'print_wc_notices' ] );
+
+		// WC product added to cart message filter
+		add_filter( 'wc_add_to_cart_message', [ &$this, 'add_continue_shopping_link' ], 10, 2 );
+	}
+
+	/**
+	 * Add "Continue Shopping" link to the added-to-cart message
+	 *
+	 * @param string $message
+	 * @param int    $product_id
+	 *
+	 * @return string
+	 */
+	public function add_continue_shopping_link( $message, $product_id = false )
+	{
+		if ( false === $this->is_assembly_product_page( $product_id ) )
+		{
+			// skip
+			return $message;
+		}
+
+		$count = 1;
+		return str_replace( '</a>', '</a> <a href="' . esc_url( get_option( 'wc_cp_continue_shopping_url', wc_get_page_permalink( 'shop' ) ) ) . '" class="button wc-continue-shopping wc-forward">' . __( 'Continue Shopping', WC_CP_DOMAIN ) . '</a>', $message, $count );
+	}
+
+	/**
+	 * Print notices if assembly product
+	 *
+	 * @return void
+	 */
+	public function print_wc_notices()
+	{
+		if ( $this->is_assembly_product_page() )
+		{
+			// is assembly product so print the notices here
+			echo '<div class="woocommerce-messages-container">';
+			wc_print_notices();
+			echo '</div>';
+		}
+	}
+
+	/**
+	 * Unhook notices print before assembly product page
+	 *
+	 * @return void
+	 */
+	public function unhook_notices_print()
+	{
+		if ( $this->is_assembly_product_page() )
+		{
+			// is assembly product so remove the print from here
+			remove_action( 'woocommerce_before_single_product', 'wc_print_notices' );
+		}
 	}
 
 	/**
@@ -889,18 +948,20 @@ class Frontend extends Component
 	/**
 	 * Check if current request for assembly product page
 	 *
-	 * @param int|WC_Product $product
+	 * @param bool|int|WC_Product $product
 	 *
 	 * @return bool
 	 */
 	public function is_assembly_product_page( $product = false )
 	{
+		$is_product = is_product();
 		if ( !is_object( $product ) )
 		{
 			// current query product
-			$product = wc_get_product( $product );
+			$product    = wc_get_product( $product );
+			$is_product = true;
 		}
 
-		return false === is_admin() && is_product() && $product && wc_cp_products()->is_assembly_product( $product );
+		return false === is_admin() && $is_product && $product && wc_cp_products()->is_assembly_product( $product );
 	}
 }

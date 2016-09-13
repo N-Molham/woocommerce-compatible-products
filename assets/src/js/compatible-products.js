@@ -334,6 +334,14 @@
 			}
 		} );
 
+		// get any notices printed
+		var $notices = $( '.woocommerce-message' );
+		if ( $notices.length ) {
+			setTimeout( function() {
+				$notices.animate_scroll_to( 180 );
+			}, 100 );
+		}
+
 		/**
 		 * Setup assembly configuration table item object
 		 *
@@ -514,5 +522,30 @@
 
 		return s.join( dec );
 	}
+
+	// window scroll animation
+	$.fn.animate_scroll_to = function( offset, speed ) {
+		if ( !window.$viewport ) {
+			// viewport
+			window.$viewport = $( 'body, html' );
+		}
+
+		// check target
+		if ( !this.length )
+			return;
+
+		// check offset
+		offset = isNaN( offset ) ? 0 : parseFloat( offset );
+
+		// check speed
+		speed = isNaN( speed ) ? 500 : parseFloat( speed );
+
+		// scroll viewport
+		$viewport.animate( {
+			scrollTop: this.offset().top - offset
+		}, speed );
+
+		return this;
+	};
 
 })( jQuery, window );

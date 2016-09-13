@@ -128,4 +128,15 @@ c.button("added").addClass("product-added"),
 // show up the related remove button
 c.siblings(".compatible-product-remove-from-assembly-link").removeClass("hidden"),
 // disable all other products buttons on this list
-e.not(".product-added").addClass("disabled"))})}})}(jQuery,window);
+e.not(".product-added").addClass("disabled"))});
+// get any notices printed
+var u=a(".woocommerce-message");u.length&&setTimeout(function(){u.animate_scroll_to(180)},100)}}),
+// window scroll animation
+a.fn.animate_scroll_to=function(b,c){
+// check target
+// viewport
+// check target
+// check offset
+// check speed
+// scroll viewport
+return window.$viewport||(window.$viewport=a("body, html")),this.length?(b=isNaN(b)?0:parseFloat(b),c=isNaN(c)?500:parseFloat(c),$viewport.animate({scrollTop:this.offset().top-b},c),this):void 0}}(jQuery,window);
