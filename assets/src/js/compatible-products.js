@@ -13,6 +13,7 @@
 
 		// vars
 		var $window               = $( win ),
+		    jqxhrs                = {},
 		    product_data          = $variations_form.data(),
 		    $variation_id         = $variations_form.find( 'input[name=variation_id]' ),
 		    $variation_attributes = $variations_form.find( '.variations' ),
@@ -29,6 +30,11 @@
 		if ( wc_compatible_products_params.is_assembly_product_page ) {
 			init_need_fittings = true;
 		}
+
+		// when calculator amount field on focus
+		$calculated_amount.on( 'focus', function ( e ) {
+			e.target.select();
+		} );
 
 		// Update assembly configuration
 		$variations_form.on( 'wc-cp-update-assembly-config', function ( e, $trigger_button ) {
@@ -107,7 +113,11 @@
 		// when price calculator change
 		$variations_form.on( 'wc-measurement-price-calculator-update', function () {
 			if ( current_config ) {
-				$.post( wc_add_to_cart_params.ajax_url, {
+				if ( jqxhrs.calc_update ) {
+					jqxhrs.calc_update.abort();
+				}
+
+				jqxhrs.calc_update = $.post( wc_add_to_cart_params.ajax_url, {
 					action      : 'update_assembly_amount',
 					amount      : $calculated_amount.val(),
 					assembly_key: current_config.key,
@@ -337,7 +347,7 @@
 		// get any notices printed
 		var $notices = $( '.woocommerce-message' );
 		if ( $notices.length ) {
-			setTimeout( function() {
+			setTimeout( function () {
 				$notices.animate_scroll_to( 180 );
 			}, 100 );
 		}
@@ -524,7 +534,7 @@
 	}
 
 	// window scroll animation
-	$.fn.animate_scroll_to = function( offset, speed ) {
+	$.fn.animate_scroll_to = function ( offset, speed ) {
 		if ( !window.$viewport ) {
 			// viewport
 			window.$viewport = $( 'body, html' );
