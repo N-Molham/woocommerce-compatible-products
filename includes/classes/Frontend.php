@@ -4,6 +4,7 @@ use WC_Cart;
 use WC_Order_Item_Meta;
 use WC_Product;
 use WC_Product_Variation;
+use WP_Post;
 
 /**
  * Frontend logic
@@ -139,6 +140,28 @@ class Frontend extends Component
 
 		// WC product added to cart message filter
 		add_filter( 'wc_add_to_cart_message', [ &$this, 'add_continue_shopping_link' ], 10, 2 );
+
+		// WP post permalink filter
+		add_filter( 'post_type_link', [ &$this, 'product_link_with_assembly_option' ], 40, 2 );
+	}
+
+	/**
+	 * Add assembly option to product link
+	 *
+	 * @param string  $permalink
+	 * @param WP_Post $post
+	 *
+	 * @return string
+	 */
+	public function product_link_with_assembly_option( $permalink, $post )
+	{
+		if ( false === $this->is_assembly_product_page( $post->ID ) )
+		{
+			// skip
+			return $permalink;
+		}
+
+		return add_query_arg( 'wc_cp_with_need_assembly', 'yes', $permalink );
 	}
 
 	/**
@@ -158,6 +181,7 @@ class Frontend extends Component
 		}
 
 		$count = 1;
+
 		return str_replace( '</a>', '</a> <a href="' . esc_url( get_option( 'wc_cp_continue_shopping_url', wc_get_page_permalink( 'shop' ) ) ) . '" class="button wc-continue-shopping wc-forward">' . __( 'Continue Shopping', WC_CP_DOMAIN ) . '</a>', $message, $count );
 	}
 
@@ -328,9 +352,10 @@ class Frontend extends Component
 
 		// vars
 		$button_label = get_option( 'wc_cp_product_assembly_btn_label', __( 'Select Options with Assembly', WC_CP_DOMAIN ) );
-		$button_link  = add_query_arg( 'wc_cp_with_need_assembly', 'yes', $product->get_permalink() );
+		//$button_link  = add_query_arg( 'wc_cp_with_need_assembly', 'yes', $product->get_permalink() );
+		$button_link = $product->get_permalink();
 
-		$add_to_cart_link .= wc_cp_view( 'frontend/assembly_product_page_button', compact( 'button_label', 'button_link' ), true );
+		$add_to_cart_link = wc_cp_view( 'frontend/assembly_product_page_button', compact( 'button_label', 'button_link' ), true );
 
 		return $add_to_cart_link;
 	}
