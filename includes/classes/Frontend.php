@@ -28,6 +28,13 @@ class Frontend extends Component
 	protected $with_assembly;
 
 	/**
+	 * Is the current pointer within the variation form of not
+	 *
+	 * @var boolean
+	 */
+	protected $within_variation_form;
+
+	/**
 	 * Constructor
 	 *
 	 * @return void
@@ -113,6 +120,10 @@ class Frontend extends Component
 
 		// WC product attribute label filter
 		add_filter( 'woocommerce_attribute_label', [ &$this, 'assembly_product_page_attribute_label' ] );
+
+		// WC variation form before/after action hooks
+		add_action( 'woocommerce_before_variations_form', [ &$this, 'set_within_assembly_mark' ] );
+		add_action( 'woocommerce_after_variations_form', [ &$this, 'unset_within_assembly_mark' ] );
 
 		// WP body tag css classes filter
 		add_filter( 'body_class', [ &$this, 'assembly_product_page_css_classes' ] );
@@ -306,13 +317,33 @@ class Frontend extends Component
 	 */
 	public function assembly_product_page_attribute_label( $label )
 	{
-		if ( false === $this->is_assembly_product_page() )
+		if ( false === $this->is_assembly_product_page() || true !== $this->within_variation_form )
 		{
 			// skip non-single assembly product page
 			return $label;
 		}
 
 		return '<span class="assembly-step-label">' . __( 'Step 2.', WC_CP_DOMAIN ) . '</span> ' . $label;
+	}
+
+	/**
+	 * Mark the pointer as within variation form
+	 *
+	 * @return void
+	 */
+	public function set_within_assembly_mark()
+	{
+		$this->within_variation_form = true;
+	}
+
+	/**
+	 * Un-mark the pointer as within variation form
+	 *
+	 * @return void
+	 */
+	public function unset_within_assembly_mark()
+	{
+		$this->within_variation_form = false;
 	}
 
 	/**

@@ -80,9 +80,9 @@ g.on("change wc-cp-change",".wc-cp-need-compatible",function(a){
 // assembly panels
 var b=g.find(".wc-cp-products-list, .wc-cp-assembly-config");a.target.checked||q?b.removeClass("hidden"):b.addClass("hidden");var c=b.filter(".wc-cp-products-list");c.length<2&&(
 // set first box title
-c.attr("data-order",1).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_1),
+c.attr({id:"wc-cp-products-list-1","data-order":1}).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_1),
 // clone it after it
-c.clone().attr("data-order",2).insertAfter(c).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_2)),s&&s.remove();
+c.clone().attr({id:"wc-cp-products-list-2","data-order":2}).insertAfter(c).find(".panel-heading").text(wc_compatible_products_params.labels.assembly_box_2)),s&&s.remove();
 // move specifications panel location after the attributes table
 var d=g.find(".panel-specifications");s=d.clone().insertAfter(l),d.remove()}).trigger("wc-cp-change"),
 // when variation changes
