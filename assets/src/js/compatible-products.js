@@ -152,10 +152,16 @@
 			var $assembly_boxes = $panels.filter( '.wc-cp-products-list' );
 			if ( $assembly_boxes.length < 2 ) {
 				// set first box title
-				$assembly_boxes.attr( 'data-order', 1 ).find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_1 );
+				$assembly_boxes.attr( {
+					'id'        : 'wc-cp-products-list-1',
+					'data-order': 1
+				} ).find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_1 );
 
 				// clone it after it
-				$assembly_boxes.clone().attr( 'data-order', 2 ).insertAfter( $assembly_boxes )
+				$assembly_boxes.clone().attr( {
+					'id'        : 'wc-cp-products-list-2',
+					'data-order': 2
+				} ).insertAfter( $assembly_boxes )
 				// and set the new title
 				.find( '.panel-heading' ).text( wc_compatible_products_params.labels.assembly_box_2 );
 			}
