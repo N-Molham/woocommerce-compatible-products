@@ -757,8 +757,10 @@ class Frontend extends Component
 	 */
 	public function product_fittings_measuring_instructions_modal()
 	{
-		if ( is_product() || is_checkout() )
+		$product = wc_get_product();
+		if ( ( false !== $product && $this->is_assembly_product_page( $product->id ) ) || is_checkout() )
 		{
+			// only if assembly product or checkout page
 			echo $this->get_measuring_instructions();
 		}
 	}
